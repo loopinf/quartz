@@ -1,26 +1,56 @@
-# Market Intel Index
+---
+title: Market Intel Home
+summary: 오늘 읽을 것, 최신 validated 상태, 예측·복기 진입선, 최근 변경 하이라이트를 먼저 보여주는 daily operating home.
+---
 
-## Start Here
-- [MARKET_INTEL_RECENT_CHANGES](./market-intel/MARKET_INTEL_RECENT_CHANGES)
-- [market-intel progress big picture](./market-intel/market-intel-progress-big-picture)
+# Market Intel Home
 
-## 예측 / 복기 바로가기
-- [내일 대응 시나리오 보기 (next-session prep)](./market-intel/daily/2026-04-20_next-session-prep)
-- [예측 후보 검토 대시보드 보기 (portfolio pilot review dashboard)](./market-intel/research/portfolio-pilot-review-dashboard)
-- [과거 예측 샘플 비교 보기 (portfolio pilot batch)](./market-intel/research/portfolio-pilot-batch-additional-samples)
-- [예측 복기 시스템 보기 (predictive replay and review system)](./market-intel/workflows/predictive-replay-and-review-system)
-- [질문 선택 workflow 보기](./market-intel/workflows/us-event-question-selection-workflow)
-- [예측 label 설계 보기 (multi-horizon path dataset schema)](./market-intel/research/multi-horizon-path-dataset-schema)
+## 오늘 상태
+- Trading date 기준 latest input: [저녁 브리핑 입력 — 2026-04-21](./market-intel/daily/2026-04-21_evening-briefing-input)
+- Latest validated recap: [2026-04-20_top30_recap](./market-intel/daily/2026-04-20_top30_recap)
+- Next action note: [다음 세션 대응 준비 — 2026-04-20](./market-intel/daily/2026-04-20_next-session-prep)
+- Current mode: `2026-04-21 same-day validated recap 없음 → recovery / partial-input`
+- Daily workspace: [daily workspace 바로가기](./market-intel/daily/)
+
+## 오늘 바로 할 일
+### 1. 오늘 장 상태 먼저 보기
+- [오늘 evening briefing input 보기](./market-intel/daily/2026-04-21_evening-briefing-input)
+- [가장 최신 validated TOP30 recap 보기](./market-intel/daily/2026-04-20_top30_recap)
+- [최근 변경 전체 보기](./market-intel/MARKET_INTEL_RECENT_CHANGES)
+
+### 2. 내일 대응 준비
+- [다음 세션 대응 준비 — 2026-04-20](./market-intel/daily/2026-04-20_next-session-prep)
+- [이전 evening briefing input — 2026-04-20](./market-intel/daily/2026-04-20_evening-briefing-input)
+- [US to KR bridge — 2026-04-16 Mythos · banks](./market-intel/daily/2026-04-16_us-to-kr-bridge-mythos-banks)
+
+### 3. 예측 / 복기 루프
+- [prediction workspace 바로가기](./market-intel/research/prediction-workspace)
+- [예측 후보 검토 대시보드 보기](./market-intel/research/portfolio-pilot-review-dashboard)
+- [예측 복기 시스템 보기](./market-intel/workflows/predictive-replay-and-review-system)
 - [최근 replay 보기 — NVIDIA Ising](./market-intel/research/replay-2026-04-14-nvidia-ising)
 - [최근 replay 보기 — Mythos · banks](./market-intel/research/replay-2026-04-13-anthropic-mythos-banks)
-- [최근 US→KR bridge 보기 — Mythos · banks](./market-intel/daily/2026-04-16_us-to-kr-bridge-mythos-banks)
 
-> 예측 관점에서는 `next-session prep → portfolio pilot review dashboard → replay / bridge` 순서로 보면 된다.
+> daily 운영 기본 진입선은 `today input → latest validated recap → next-session prep → prediction workspace / replay review`다.
+
+## 최근 변경 하이라이트
+- [2026-04-20 validated TOP30 recap 추가](./market-intel/daily/2026-04-20_top30_recap)
+- [2026-04-21 evening briefing input recovery-status 추가](./market-intel/daily/2026-04-21_evening-briefing-input)
+- [multi-horizon path dataset schema 추가](./market-intel/research/multi-horizon-path-dataset-schema)
+- [Quartz 링크 검증 workflow 추가](./market-intel/workflows/quartz-link-validation-workflow)
+- [MARKET_INTEL_RECENT_CHANGES 전체 보기](./market-intel/MARKET_INTEL_RECENT_CHANGES)
+
+## 큰그림 / 상태 확인
+- [market-intel progress big picture](./market-intel/market-intel-progress-big-picture)
+- [SOT — market-intel full pipeline](./market-intel/architecture/sot-market-intel-full-pipeline)
+- [pipeline — high-signal big picture](./market-intel/architecture/pipeline-high-signal-big-picture)
 
 ## Today / Next Session
-- [오늘자 validated TOP30 — 2026-04-17](./market-intel/daily/2026-04-17_top30_recap)
-- [저녁 브리핑 입력 — 2026-04-17](./market-intel/daily/2026-04-17_evening-briefing-input)
+### Daily core
+- [저녁 브리핑 입력 — 2026-04-21](./market-intel/daily/2026-04-21_evening-briefing-input)
+- [오늘자 validated TOP30 — 2026-04-20](./market-intel/daily/2026-04-20_top30_recap)
 - [다음 세션 대응 준비 — 2026-04-20](./market-intel/daily/2026-04-20_next-session-prep)
+
+### Supporting daily context
 - [저녁 브리핑 입력 — 2026-04-20](./market-intel/daily/2026-04-20_evening-briefing-input)
 - [US to KR bridge — 2026-04-15 Ising](./market-intel/daily/2026-04-15_us-to-kr-bridge)
 - [US to KR bridge — 2026-04-16 Mythos · banks](./market-intel/daily/2026-04-16_us-to-kr-bridge-mythos-banks)
@@ -71,6 +101,7 @@
 - [EVENT_TAXONOMY](./market-intel/EVENT_TAXONOMY)
 
 ## Daily Archive
+- [2026-04-21_evening-briefing-input](./market-intel/daily/2026-04-21_evening-briefing-input)
 - [2026-04-20_evening-briefing-input](./market-intel/daily/2026-04-20_evening-briefing-input)
 - [2026-04-17_top30_recap](./market-intel/daily/2026-04-17_top30_recap)
 - [2026-04-16_top30_recap](./market-intel/daily/2026-04-16_top30_recap)
