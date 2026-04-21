@@ -1,39 +1,27 @@
 ---
 title: Market Intel Start
-summary: 8081 루트 landing page. 오늘 상태 확인, daily workflow 진입, prediction/replay, 최근 변경 확인으로 바로 들어가는 운영 시작점.
+summary: 8081 루트 시작점. 오늘 입력, 최신 validated recap, next-session prep, prediction workspace로 바로 들어가는 페이지.
 ---
 
 # Market Intel Start
 
-> **루트 status strip**
-> - Primary workflow: [daily workflow 시작](./market-intel/daily/)
-> - Market Intel home: [오늘 상태 확인](./market-intel/)
-> - Latest input: [2026-04-21 evening briefing input](./market-intel/daily/2026-04-21_evening-briefing-input)
-> - Latest validated recap: [2026-04-20_top30_recap](./market-intel/daily/2026-04-20_top30_recap)
-> - Today mode: `recovery / partial-input`
+## 지금 상태
+- 오늘 입력: [2026-04-21 evening briefing input](./market-intel/daily/2026-04-21_evening-briefing-input)
+- 최신 validated recap: [2026-04-20_top30_recap](./market-intel/daily/2026-04-20_top30_recap)
+- 현재 모드: `recovery / partial-input` = 오늘 same-day validated recap이 아직 없어서, 임시 입력 기준으로 보는 상태
 
-## 지금 바로 시작
-### 1. 오늘 업무 시작
-- [daily workflow 시작](./market-intel/daily/)
-- [오늘 입력 바로 보기](./market-intel/daily/2026-04-21_evening-briefing-input)
-- [가장 최신 validated recap 보기](./market-intel/daily/2026-04-20_top30_recap)
+## 어디부터 볼까
+1. [daily workflow 시작](./market-intel/daily/)
+2. [오늘 상태가 정리된 Market Intel home](./market-intel/)
+3. [prediction workspace](./market-intel/research/prediction-workspace)
+4. [최근 변경 로그](./market-intel/MARKET_INTEL_RECENT_CHANGES)
 
-### 2. 상태 / 다음 액션 확인
-- [Market Intel home](./market-intel/)
-- [다음 세션 대응 준비 — 2026-04-20](./market-intel/daily/2026-04-20_next-session-prep)
-- [최근 변경 로그](./market-intel/MARKET_INTEL_RECENT_CHANGES)
+## 용어 짧게 설명
+- `validated recap`: archive 검증을 통과한 당일/최근 장 요약
+- `next-session prep`: 다음 거래일 대응 메모
+- `prediction workspace`: replay, dashboard, path schema를 묶어 둔 예측 검토 허브
 
-### 3. 예측 / 복기 들어가기
-- [prediction workspace](./market-intel/research/prediction-workspace)
-- [portfolio pilot review dashboard](./market-intel/research/portfolio-pilot-review-dashboard)
-- [predictive replay system](./market-intel/workflows/predictive-replay-and-review-system)
-
-## 이 루트 페이지의 역할
-- `/` 는 설명 문서보다 **운영 시작점**에 가깝다.
-- daily workflow가 가장 자주 쓰이는 기본 진입선이다.
-- 더 자세한 상태/링크 묶음은 [Market Intel home](./market-intel/) 에서 본다.
-
-## workspace shortcuts
+## 섹션 바로가기
 - [daily workspace](./market-intel/daily/)
 - [prediction workspace](./market-intel/research/prediction-workspace)
 - [research folder](./market-intel/research/)

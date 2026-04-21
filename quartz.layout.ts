@@ -38,12 +38,58 @@ export const defaultContentPageLayout: PageLayout = {
         { Component: Component.ReaderMode() },
       ],
     }),
-    Component.Explorer(),
+    Component.Explorer({
+      title: "workspace",
+      folderDefaultState: "collapsed",
+      useSavedState: true,
+      filterFn: (node) => {
+        if (node.isFolder) return true
+        const keep = new Set([
+          "market-intel/MARKET_INTEL_RECENT_CHANGES",
+          "market-intel/market-intel-progress-big-picture",
+          "market-intel/daily/2026-04-21_evening-briefing-input",
+          "market-intel/daily/2026-04-20_top30_recap",
+          "market-intel/daily/2026-04-20_next-session-prep",
+          "market-intel/research/prediction-workspace",
+          "market-intel/research/portfolio-pilot-review-dashboard",
+          "market-intel/workflows/predictive-replay-and-review-system",
+        ])
+        return keep.has(node.slug)
+      },
+      mapFn: (node) => {
+        const labels = {
+          "market-intel": "Market Intel Home",
+          "daily": "Daily",
+          "research": "Prediction / Research",
+          "workflows": "Workflows",
+          "events": "Events",
+          "entities": "Stocks",
+          "MARKET_INTEL_RECENT_CHANGES": "최근 변경 로그",
+          "market-intel-progress-big-picture": "큰그림",
+          "2026-04-21_evening-briefing-input": "오늘 input",
+          "2026-04-20_top30_recap": "최신 validated recap",
+          "2026-04-20_next-session-prep": "내일 대응 준비",
+          "prediction-workspace": "Prediction Workspace",
+          "portfolio-pilot-review-dashboard": "예측 후보 대시보드",
+          "predictive-replay-and-review-system": "Predictive Replay",
+        }
+        if (labels[node.slugSegment]) node.displayName = labels[node.slugSegment]
+      },
+    }),
   ],
   right: [
-    Component.Graph(),
-    Component.DesktopOnly(Component.TableOfContents()),
-    Component.Backlinks(),
+    Component.ConditionalRender({
+      component: Component.Graph(),
+      condition: (page) => page.fileData.slug !== "index",
+    }),
+    Component.ConditionalRender({
+      component: Component.DesktopOnly(Component.TableOfContents()),
+      condition: (page) => page.fileData.slug !== "index",
+    }),
+    Component.ConditionalRender({
+      component: Component.Backlinks(),
+      condition: (page) => page.fileData.slug !== "index",
+    }),
   ],
 }
 
@@ -62,7 +108,44 @@ export const defaultListPageLayout: PageLayout = {
         { Component: Component.Darkmode() },
       ],
     }),
-    Component.Explorer(),
+    Component.Explorer({
+      title: "섹션",
+      folderDefaultState: "collapsed",
+      useSavedState: false,
+      filterFn: (node) => {
+        if (node.isFolder) return true
+        const keep = new Set([
+          "market-intel/MARKET_INTEL_RECENT_CHANGES",
+          "market-intel/market-intel-progress-big-picture",
+          "market-intel/daily/2026-04-21_evening-briefing-input",
+          "market-intel/daily/2026-04-20_top30_recap",
+          "market-intel/daily/2026-04-20_next-session-prep",
+          "market-intel/research/prediction-workspace",
+          "market-intel/research/portfolio-pilot-review-dashboard",
+          "market-intel/workflows/predictive-replay-and-review-system",
+        ])
+        return keep.has(node.slug)
+      },
+      mapFn: (node) => {
+        const labels = {
+          "market-intel": "Market Intel Home",
+          "daily": "Daily",
+          "research": "Prediction / Research",
+          "workflows": "Workflows",
+          "events": "Events",
+          "entities": "Stocks",
+          "MARKET_INTEL_RECENT_CHANGES": "최근 변경 로그",
+          "market-intel-progress-big-picture": "큰그림",
+          "2026-04-21_evening-briefing-input": "오늘 input",
+          "2026-04-20_top30_recap": "최신 validated recap",
+          "2026-04-20_next-session-prep": "내일 대응 준비",
+          "prediction-workspace": "Prediction Workspace",
+          "portfolio-pilot-review-dashboard": "예측 후보 대시보드",
+          "predictive-replay-and-review-system": "Predictive Replay",
+        }
+        if (labels[node.slugSegment]) node.displayName = labels[node.slugSegment]
+      },
+    }),
   ],
   right: [],
 }
