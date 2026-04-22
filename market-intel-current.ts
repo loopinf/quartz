@@ -1,4 +1,4 @@
-export const MARKET_INTEL_EXPLORER_KEEP = new Set([
+export const MARKET_INTEL_EXPLORER_KEEP_ENTRIES = [
   "market-intel/MARKET_INTEL_RECENT_CHANGES",
   "market-intel/current-readiness-board",
   "market-intel/market-intel-progress-big-picture",
@@ -9,15 +9,18 @@ export const MARKET_INTEL_EXPLORER_KEEP = new Set([
   "market-intel/daily/2026-04-22_next-session-prep",
   "market-intel/daily/2026-04-22_top30_recap",
   "market-intel/daily/2026-04-22_evening-briefing-input",
-])
+] as const
 
 export const MARKET_INTEL_EXPLORER_LABELS: Record<string, string> = {
   "market-intel": "Market Intel Home",
   "daily": "Daily",
   "research": "Prediction / Research",
   "workflows": "Workflows",
+  "architecture": "Architecture",
   "events": "Events",
   "entities": "Stocks",
+  "templates": "Templates",
+  "scripts": "Scripts",
   "MARKET_INTEL_RECENT_CHANGES": "최근 변경 로그",
   "current-readiness-board": "진행상황판",
   "market-intel-progress-big-picture": "큰그림",

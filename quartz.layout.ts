@@ -1,6 +1,27 @@
 import { PageLayout, SharedLayout } from "./quartz/cfg"
 import * as Component from "./quartz/components"
-import { MARKET_INTEL_EXPLORER_KEEP, MARKET_INTEL_EXPLORER_LABELS } from "./market-intel-current"
+import { MARKET_INTEL_EXPLORER_KEEP_ENTRIES, MARKET_INTEL_EXPLORER_LABELS } from "./market-intel-current"
+
+const marketIntelExplorerFilterFn = new Function(
+  "node",
+  `const keep = new Set(${JSON.stringify(MARKET_INTEL_EXPLORER_KEEP_ENTRIES)});
+   const slug = node.slug ?? "";
+   if (node.isFolder) {
+     return slug === "" || slug === "market-intel" || slug.startsWith("market-intel/");
+   }
+   if (slug === "index") return true;
+   if (keep.has(slug)) return true;
+   if (!slug.startsWith("market-intel/")) return false;
+   const parts = slug.split("/");
+   if (parts.length <= 2) return true;
+   if (parts.length === 3 && parts[2] === "index") return true;
+   return false;`,
+) as (node: { isFolder: boolean; slug?: string }) => boolean
+
+const marketIntelExplorerMapFn = new Function(
+  "node",
+  `const labels = ${JSON.stringify(MARKET_INTEL_EXPLORER_LABELS)}; const label = labels[node.slugSegment]; if (label) node.displayName = label;`,
+) as (node: { slugSegment: string; displayName: string }) => void
 
 // components shared across all pages
 export const sharedPageComponents: SharedLayout = {
@@ -42,15 +63,10 @@ export const defaultContentPageLayout: PageLayout = {
     Component.Explorer({
       title: "workspace",
       folderDefaultState: "collapsed",
+      folderClickBehavior: "link",
       useSavedState: true,
-      filterFn: (node) => {
-        if (node.isFolder) return true
-        return MARKET_INTEL_EXPLORER_KEEP.has(node.slug)
-      },
-      mapFn: (node) => {
-        const label = MARKET_INTEL_EXPLORER_LABELS[node.slugSegment]
-        if (label) node.displayName = label
-      },
+      filterFn: marketIntelExplorerFilterFn,
+      mapFn: marketIntelExplorerMapFn,
     }),
   ],
   right: [
@@ -87,15 +103,10 @@ export const defaultListPageLayout: PageLayout = {
     Component.Explorer({
       title: "workspace",
       folderDefaultState: "collapsed",
+      folderClickBehavior: "link",
       useSavedState: true,
-      filterFn: (node) => {
-        if (node.isFolder) return true
-        return MARKET_INTEL_EXPLORER_KEEP.has(node.slug)
-      },
-      mapFn: (node) => {
-        const label = MARKET_INTEL_EXPLORER_LABELS[node.slugSegment]
-        if (label) node.displayName = label
-      },
+      filterFn: marketIntelExplorerFilterFn,
+      mapFn: marketIntelExplorerMapFn,
     }),
   ],
   right: [],

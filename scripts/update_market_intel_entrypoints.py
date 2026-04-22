@@ -837,15 +837,18 @@ def current_ts(state: CurrentState) -> str:
         '  "daily": "Daily",',
         '  "research": "Prediction / Research",',
         '  "workflows": "Workflows",',
+        '  "architecture": "Architecture",',
         '  "events": "Events",',
         '  "entities": "Stocks",',
+        '  "templates": "Templates",',
+        '  "scripts": "Scripts",',
     ]
     for key, value in labels.items():
         label_lines.append(f'  "{ts_string(key)}": "{ts_string(value)}",')
     labels_block = "\n".join(label_lines)
-    return f"""export const MARKET_INTEL_EXPLORER_KEEP = new Set([
+    return f"""export const MARKET_INTEL_EXPLORER_KEEP_ENTRIES = [
 {keep_block}
-])
+] as const
 
 export const MARKET_INTEL_EXPLORER_LABELS: Record<string, string> = {{
 {labels_block}
