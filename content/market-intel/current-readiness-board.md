@@ -40,6 +40,16 @@ summary: 지금 세션 기준으로 필요한 핵심 daily 문서가 자동으�
 - `READY` 직전 장 close input: [2026-04-22_evening-briefing-input](/market-intel/daily/2026-04-22_evening-briefing-input)
   - 직전 장 close input이 2026-04-22_evening-briefing-input로 준비되어 있다.
 
+## 운영 추가 체크
+- `MISSING` final evening briefing output: 필요 문서 `2026-04-22_evening-briefing`
+  - 최신 fallback output: [2026-04-16_evening-briefing](/market-intel/daily/2026-04-16_evening-briefing)
+- `READY` required close archive: `/Users/gbserver/repos/jmkr_kj/data/daily/archive/2026-04-22.json`
+  - 현재 세션에 필요한 close archive가 존재하고 validation 통과: market_close + is_empty=false + TOP30 문구 + 번호 라인 29개
+- `WAITING` same-day source archive: `/Users/gbserver/repos/jmkr_kj/data/daily/archive/2026-04-23.json`
+  - 장전/장중에는 당일 archive가 아직 없어도 정상일 수 있다. close 이후 READY/MISSING으로 봐야 한다.
+- `READY` telegram parser health
+  - parser health=healthy, 직전 장 기준 last_update=2026-04-22 22:56 KST
+
 ## 자동 확인이 실제로 들어가 있나
 - 자동 확인 트리거: `~/market-intel-site/scripts/sync-market-intel.sh`
 - 실제 판정 로직: `~/market-intel-site/scripts/update_market_intel_entrypoints.py`
@@ -47,6 +57,8 @@ summary: 지금 세션 기준으로 필요한 핵심 daily 문서가 자동으�
   - `오늘/다음 세션 prep` = exact-date match
   - `직전 장 validated recap` = exact-date + `validation_status: validated`
   - `직전 장 close input` = exact-date match
+  - `final evening briefing output` = exact-date match
+  - `same-day source archive` = phase-aware check (`장전/장중`에는 WAITING 가능, `장후`에는 READY/MISSING)
 - 현재 반영 위치: `/`, `/market-intel/`, `/market-intel/daily/`, `/market-intel/research/prediction-workspace`, `/market-intel/current-readiness-board`
 - 한계: 이 확인은 **sync/build 시점 자동화**다. 즉 문서 존재 여부를 자동 판정해 표시하지만, 별도 cron 없이 매분 실시간 재판정하는 구조는 아니다.
 
@@ -54,12 +66,16 @@ summary: 지금 세션 기준으로 필요한 핵심 daily 문서가 자동으�
 - prep target: `2026-04-23_next-session-prep`
 - validated recap target: `2026-04-22_top30_recap`
 - close input target: `2026-04-22_evening-briefing-input`
+- briefing output target: `2026-04-22_evening-briefing`
+- same-day archive target: `/Users/gbserver/repos/jmkr_kj/data/daily/archive/2026-04-23.json`
 - fallback은 참고용이지 readiness 충족으로 보지 않음
 
 ## 최신 usable 문서
 - 최신 prep: [2026-04-22_next-session-prep](/market-intel/daily/2026-04-22_next-session-prep)
 - 최신 validated recap: [2026-04-22_top30_recap](/market-intel/daily/2026-04-22_top30_recap)
 - 최신 close input: [2026-04-22_evening-briefing-input](/market-intel/daily/2026-04-22_evening-briefing-input)
+- 최신 evening briefing output: [2026-04-16_evening-briefing](/market-intel/daily/2026-04-16_evening-briefing)
+- same-day archive path: `/Users/gbserver/repos/jmkr_kj/data/daily/archive/2026-04-23.json` (missing yet)
 
 ## 이 페이지를 어떻게 써야 하나
 - 이 페이지는 **지금 세션에 필요한 문서가 최신인지**를 먼저 확인하는 운영 현황판이다.

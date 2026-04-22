@@ -50,6 +50,8 @@ summary: 8081 루트 시작점. 현재 세션에 필요한 문서가 exact-date 
 - 최신 prep: [2026-04-22_next-session-prep](/market-intel/daily/2026-04-22_next-session-prep)
 - 최신 validated recap: [2026-04-22_top30_recap](/market-intel/daily/2026-04-22_top30_recap)
 - 최신 close input: [2026-04-22_evening-briefing-input](/market-intel/daily/2026-04-22_evening-briefing-input)
+- 최신 evening briefing output: [2026-04-16_evening-briefing](/market-intel/daily/2026-04-16_evening-briefing)
+- same-day archive path: `/Users/gbserver/repos/jmkr_kj/data/daily/archive/2026-04-23.json` (missing yet)
 
 ## 용어 정리
 - `필수 문서`: 현재 세션 시점에 exact-date로 준비돼 있어야 하는 문서

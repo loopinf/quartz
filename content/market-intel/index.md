@@ -50,6 +50,8 @@ summary: 현재 세션 필수 문서가 자동으로 준비됐는지 먼저 확�
 - 최신 prep: [2026-04-22_next-session-prep](/market-intel/daily/2026-04-22_next-session-prep)
 - 최신 validated recap: [2026-04-22_top30_recap](/market-intel/daily/2026-04-22_top30_recap)
 - 최신 close input: [2026-04-22_evening-briefing-input](/market-intel/daily/2026-04-22_evening-briefing-input)
+- 최신 evening briefing output: [2026-04-16_evening-briefing](/market-intel/daily/2026-04-16_evening-briefing)
+- same-day archive path: `/Users/gbserver/repos/jmkr_kj/data/daily/archive/2026-04-23.json` (missing yet)
 
 ## 왜 이렇게 보나
 - 수동으로 "어제 문서 열어보자"가 아니라, **현재 시점에 필요한 exact-date 문서가 있는지 자동으로 확인**해야 한다.

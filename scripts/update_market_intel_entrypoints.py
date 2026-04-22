@@ -2,7 +2,9 @@
 from __future__ import annotations
 
 import argparse
+import json
 import re
+import subprocess
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from pathlib import Path
@@ -34,6 +36,16 @@ class DocStatus:
 
 
 @dataclass(frozen=True)
+class ExtraStatus:
+    code: str
+    label: str
+    target_text: str
+    href: str | None
+    link_text: str | None
+    summary: str
+
+
+@dataclass(frozen=True)
 class CurrentState:
     now: datetime
     today_date: str
@@ -43,18 +55,25 @@ class CurrentState:
     required_prep_date: str
     required_recap_date: str
     required_close_input_date: str
+    required_briefing_output_date: str
+    same_day_archive_date: str
+    same_day_archive_path: Path
+    required_archive_path: Path
     required_prep: NoteRef | None
     required_recap: NoteRef | None
     required_close_input: NoteRef | None
+    required_briefing_output: NoteRef | None
     latest_prep: NoteRef | None
     latest_validated_recap: NoteRef | None
     latest_close_input: NoteRef | None
+    latest_briefing_output: NoteRef | None
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Refresh current-date Market Intel entrypoint pages and sidebar constants.")
     parser.add_argument("--vault-path", default=str(Path.home() / "Documents" / "Obsidian Vault"))
     parser.add_argument("--site-root", default=str(Path.home() / "market-intel-site"))
+    parser.add_argument("--jmkr-root", default=str(Path.home() / "repos" / "jmkr_kj"))
     return parser.parse_args()
 
 
@@ -87,6 +106,89 @@ def parse_frontmatter(path: Path) -> dict[str, str]:
         key, value = line.split(":", 1)
         frontmatter[key.strip()] = value.strip().strip('"')
     return frontmatter
+
+
+def parse_json_payload(path: Path) -> dict | None:
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+
+
+def archive_passes_validation(payload: dict | None) -> tuple[bool, str]:
+    if not isinstance(payload, dict):
+        return False, "archive JSON을 읽지 못했다."
+    message_type = payload.get("messageType")
+    parsing_info = payload.get("parsing_info") or {}
+    original_text = payload.get("originalText") or ""
+    numbered_lines = len(re.findall(r"(?m)^\s*\d+\.\s", original_text))
+    has_top30_phrase = any(token in original_text for token in ("상승률 TOP30", "상승률TOP30", "상승률 TOP 30"))
+    if message_type != "market_close":
+        return False, f"messageType={message_type!r}"
+    if parsing_info.get("is_empty") is not False:
+        return False, "parsing_info.is_empty != false"
+    if not has_top30_phrase:
+        return False, "TOP30 문구가 없다"
+    if numbered_lines < 20:
+        return False, f"번호 라인이 부족함 ({numbered_lines})"
+    return True, f"market_close + is_empty=false + TOP30 문구 + 번호 라인 {numbered_lines}개"
+
+
+def format_kst_timestamp(raw: str | None) -> str:
+    if not raw:
+        return "unknown"
+    try:
+        dt = datetime.fromisoformat(raw.replace("Z", "+00:00")).astimezone(KST)
+        return dt.strftime("%Y-%m-%d %H:%M KST")
+    except Exception:
+        return raw
+
+
+def parser_health_snapshot(jmkr_root: Path, state: CurrentState | None = None) -> tuple[str, str]:
+    try:
+        result = subprocess.run(
+            ["node", "services/telegram-parser-node/index.js", "health"],
+            cwd=jmkr_root,
+            capture_output=True,
+            text=True,
+            timeout=60,
+            check=False,
+        )
+    except Exception as exc:
+        return "UNKNOWN", f"parser health 실행 실패: {exc}"
+
+    merged = (result.stdout or "") + "\n" + (result.stderr or "")
+    start = merged.find("{")
+    end = merged.rfind("}")
+    if start == -1 or end == -1 or end <= start:
+        return "UNKNOWN", "parser health JSON 응답을 읽지 못했다."
+    try:
+        payload = json.loads(merged[start : end + 1])
+    except Exception:
+        return "UNKNOWN", "parser health JSON 파싱 실패"
+
+    status = payload.get("status")
+    last_update = payload.get("last_update")
+    last_update_label = format_kst_timestamp(last_update)
+    if status != "healthy":
+        return "WARNING", f"parser health={status}, last_update={last_update_label}"
+
+    if state is None:
+        return "READY", f"parser health=healthy, last_update={last_update_label}"
+
+    try:
+        last_update_date = datetime.fromisoformat(last_update.replace("Z", "+00:00")).astimezone(KST).strftime("%Y-%m-%d")
+    except Exception:
+        return "WARNING", f"parser health=healthy, 하지만 last_update 파싱 실패 ({last_update_label})"
+
+    if state.phase == "장후":
+        if last_update_date >= state.today_date:
+            return "READY", f"parser health=healthy, today 기준 last_update={last_update_label}"
+        return "WARNING", f"parser health=healthy, 하지만 today 기준 last_update가 stale ({last_update_label})"
+
+    if last_update_date >= state.required_recap_date:
+        return "READY", f"parser health=healthy, 직전 장 기준 last_update={last_update_label}"
+    return "WARNING", f"parser health=healthy, 하지만 직전 장 기준 last_update가 stale ({last_update_label})"
 
 
 def previous_trading_day(day: date) -> date:
@@ -139,7 +241,7 @@ def find_latest_note(
     return max(filtered, key=lambda item: item.date, default=None)
 
 
-def build_state(vault_market_intel: Path) -> CurrentState:
+def build_state(vault_market_intel: Path, jmkr_root: Path) -> CurrentState:
     now = datetime.now(KST)
     today = now.date()
     today_date = today.strftime("%Y-%m-%d")
@@ -150,12 +252,14 @@ def build_state(vault_market_intel: Path) -> CurrentState:
         required_prep_date = next_trading_day(today).strftime("%Y-%m-%d")
         required_recap_date = today_date
         required_close_input_date = today_date
+        required_briefing_output_date = today_date
         checklist_title = "다음 세션 준비 상태"
     else:
         prior = previous_trading_day(today)
         required_prep_date = today_date
         required_recap_date = prior.strftime("%Y-%m-%d")
         required_close_input_date = prior.strftime("%Y-%m-%d")
+        required_briefing_output_date = prior.strftime("%Y-%m-%d")
         checklist_title = "오늘 장전 준비 상태"
 
     required_prep = find_latest_note(daily_dir, "next-session-prep", exact_date=required_prep_date)
@@ -170,6 +274,11 @@ def build_state(vault_market_intel: Path) -> CurrentState:
         "evening-briefing-input",
         exact_date=required_close_input_date,
     )
+    required_briefing_output = find_latest_note(
+        daily_dir,
+        "evening-briefing",
+        exact_date=required_briefing_output_date,
+    )
 
     latest_prep = find_latest_note(daily_dir, "next-session-prep")
     latest_validated_recap = find_latest_note(
@@ -183,6 +292,13 @@ def build_state(vault_market_intel: Path) -> CurrentState:
         "evening-briefing-input",
         on_or_before=required_close_input_date,
     )
+    latest_briefing_output = find_latest_note(
+        daily_dir,
+        "evening-briefing",
+        on_or_before=required_briefing_output_date,
+    )
+    same_day_archive_path = jmkr_root / "data" / "daily" / "archive" / f"{today_date}.json"
+    required_archive_path = jmkr_root / "data" / "daily" / "archive" / f"{required_recap_date}.json"
 
     return CurrentState(
         now=now,
@@ -193,12 +309,18 @@ def build_state(vault_market_intel: Path) -> CurrentState:
         required_prep_date=required_prep_date,
         required_recap_date=required_recap_date,
         required_close_input_date=required_close_input_date,
+        required_briefing_output_date=required_briefing_output_date,
+        same_day_archive_date=today_date,
+        same_day_archive_path=same_day_archive_path,
+        required_archive_path=required_archive_path,
         required_prep=required_prep,
         required_recap=required_recap,
         required_close_input=required_close_input,
+        required_briefing_output=required_briefing_output,
         latest_prep=latest_prep,
         latest_validated_recap=latest_validated_recap,
         latest_close_input=latest_close_input,
+        latest_briefing_output=latest_briefing_output,
     )
 
 
@@ -337,7 +459,71 @@ def render_latest_lines(state: CurrentState) -> str:
             if state.latest_close_input
             else "- 최신 close input: 없음"
         ),
+        (
+            f"- 최신 evening briefing output: [{state.latest_briefing_output.slug}]({note_link(state.latest_briefing_output)})"
+            if state.latest_briefing_output
+            else "- 최신 evening briefing output: 없음"
+        ),
+        (
+            f"- same-day archive path: `{state.same_day_archive_path}`"
+            + (" (exists)" if state.same_day_archive_path.exists() else " (missing yet)")
+        ),
     ]
+    return "\n".join(lines)
+
+
+def render_extra_status_lines(state: CurrentState) -> str:
+    lines: list[str] = []
+
+    if state.required_briefing_output:
+        lines.append(
+            f"- `READY` final evening briefing output: [{state.required_briefing_output.slug}]({note_link(state.required_briefing_output)})"
+        )
+        lines.append(
+            f"  - 현재 세션 기준 briefing output이 {state.required_briefing_output.slug}로 존재한다."
+        )
+    else:
+        lines.append(
+            f"- `MISSING` final evening briefing output: 필요 문서 `{state.required_briefing_output_date}_evening-briefing`"
+        )
+        if state.latest_briefing_output:
+            lines.append(
+                f"  - 최신 fallback output: [{state.latest_briefing_output.slug}]({note_link(state.latest_briefing_output)})"
+            )
+        else:
+            lines.append("  - 아직 reusable evening briefing output 문서를 찾지 못했다.")
+
+    required_archive_payload = parse_json_payload(state.required_archive_path) if state.required_archive_path.exists() else None
+    required_archive_valid, required_archive_detail = archive_passes_validation(required_archive_payload)
+    if state.required_archive_path.exists() and required_archive_valid:
+        lines.append(f"- `READY` required close archive: `{state.required_archive_path}`")
+        lines.append(f"  - 현재 세션에 필요한 close archive가 존재하고 validation 통과: {required_archive_detail}")
+    elif state.required_archive_path.exists():
+        lines.append(f"- `WARNING` required close archive: `{state.required_archive_path}`")
+        lines.append(f"  - 파일은 있지만 validation 실패: {required_archive_detail}")
+    else:
+        lines.append(f"- `MISSING` required close archive: `{state.required_archive_path}`")
+        lines.append("  - 현재 세션에 필요한 close archive 파일 자체가 없다.")
+
+    same_day_payload = parse_json_payload(state.same_day_archive_path) if state.same_day_archive_path.exists() else None
+    same_day_valid, same_day_detail = archive_passes_validation(same_day_payload)
+    if state.same_day_archive_path.exists() and same_day_valid:
+        lines.append(f"- `READY` same-day source archive: `{state.same_day_archive_path}`")
+        lines.append(f"  - today archive가 존재하고 validation 통과: {same_day_detail}")
+    elif state.same_day_archive_path.exists():
+        lines.append(f"- `WARNING` same-day source archive: `{state.same_day_archive_path}`")
+        lines.append(f"  - today archive 파일은 있지만 validation 실패: {same_day_detail}")
+    elif state.phase == "장후":
+        lines.append(f"- `MISSING` same-day source archive: `{state.same_day_archive_path}`")
+        lines.append("  - 장후 기준으로는 당일 archive가 있어야 하는데 아직 없다.")
+    else:
+        lines.append(f"- `WAITING` same-day source archive: `{state.same_day_archive_path}`")
+        lines.append("  - 장전/장중에는 당일 archive가 아직 없어도 정상일 수 있다. close 이후 READY/MISSING으로 봐야 한다.")
+
+    parser_code, parser_summary = parser_health_snapshot(state.required_archive_path.parents[3], state)
+    lines.append("- `" + parser_code + "` telegram parser health")
+    lines.append(f"  - {parser_summary}")
+
     return "\n".join(lines)
 
 
@@ -560,6 +746,9 @@ summary: 지금 세션 기준으로 필요한 핵심 daily 문서가 자동으�
 ## 자동 확인 결과
 {render_status_lines(state)}
 
+## 운영 추가 체크
+{render_extra_status_lines(state)}
+
 ## 자동 확인이 실제로 들어가 있나
 - 자동 확인 트리거: `~/market-intel-site/scripts/sync-market-intel.sh`
 - 실제 판정 로직: `~/market-intel-site/scripts/update_market_intel_entrypoints.py`
@@ -567,6 +756,8 @@ summary: 지금 세션 기준으로 필요한 핵심 daily 문서가 자동으�
   - `오늘/다음 세션 prep` = exact-date match
   - `직전 장 validated recap` = exact-date + `validation_status: validated`
   - `직전 장 close input` = exact-date match
+  - `final evening briefing output` = exact-date match
+  - `same-day source archive` = phase-aware check (`장전/장중`에는 WAITING 가능, `장후`에는 READY/MISSING)
 - 현재 반영 위치: `/`, `/market-intel/`, `/market-intel/daily/`, `/market-intel/research/prediction-workspace`, `/market-intel/current-readiness-board`
 - 한계: 이 확인은 **sync/build 시점 자동화**다. 즉 문서 존재 여부를 자동 판정해 표시하지만, 별도 cron 없이 매분 실시간 재판정하는 구조는 아니다.
 
@@ -574,6 +765,8 @@ summary: 지금 세션 기준으로 필요한 핵심 daily 문서가 자동으�
 - prep target: `{state.required_prep_date}_next-session-prep`
 - validated recap target: `{state.required_recap_date}_top30_recap`
 - close input target: `{state.required_close_input_date}_evening-briefing-input`
+- briefing output target: `{state.required_briefing_output_date}_evening-briefing`
+- same-day archive target: `{state.same_day_archive_path}`
 - fallback은 참고용이지 readiness 충족으로 보지 않음
 
 ## 최신 usable 문서
@@ -669,13 +862,16 @@ def main() -> int:
     args = parse_args()
     vault_path = Path(args.vault_path).expanduser().resolve()
     site_root = Path(args.site_root).expanduser().resolve()
+    jmkr_root = Path(args.jmkr_root).expanduser().resolve()
     vault_market_intel = vault_path / "market-intel"
     if not vault_market_intel.exists():
         raise SystemExit(f"market-intel folder not found in vault: {vault_market_intel}")
     if not site_root.exists():
         raise SystemExit(f"site root not found: {site_root}")
+    if not jmkr_root.exists():
+        raise SystemExit(f"jmkr root not found: {jmkr_root}")
 
-    state = build_state(vault_market_intel)
+    state = build_state(vault_market_intel, jmkr_root)
     daily_dir = vault_market_intel / "daily"
 
     write(site_root / "content/index.md", root_markdown(state))
@@ -695,6 +891,9 @@ def main() -> int:
     print(f"  latest_prep: {state.latest_prep.slug if state.latest_prep else 'missing'}")
     print(f"  latest_validated_recap: {state.latest_validated_recap.slug if state.latest_validated_recap else 'missing'}")
     print(f"  latest_close_input: {state.latest_close_input.slug if state.latest_close_input else 'missing'}")
+    print(f"  required_briefing_output: {state.required_briefing_output_date} -> {state.required_briefing_output.slug if state.required_briefing_output else 'missing'}")
+    print(f"  latest_briefing_output: {state.latest_briefing_output.slug if state.latest_briefing_output else 'missing'}")
+    print(f"  same_day_archive: {state.same_day_archive_path} -> {'exists' if state.same_day_archive_path.exists() else 'missing'}")
     return 0
 
 
