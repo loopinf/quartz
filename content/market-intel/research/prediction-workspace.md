@@ -1,6 +1,6 @@
 ---
 title: prediction workspace
-summary: 오늘 세션 prep 준비 여부를 먼저 확인한 뒤 예측 후보와 복기로 이어지는 작업공간.
+summary: 예측 후보 검토 전에 현재 세션 준비 상태를 먼저 확인하는 prediction 허브.
 ---
 
 # Prediction Workspace
@@ -26,26 +26,18 @@ summary: 오늘 세션 prep 준비 여부를 먼저 확인한 뒤 예측 후보�
   el.textContent = `${take('year')}-${take('month')}-${take('day')} KST, ${take('weekday')} ${phase}`;
 })();
 </script>
-1. [daily workspace에서 오늘 세션 prep 상태 확인](/market-intel/daily/)
+- 먼저 [진행상황판](/market-intel/current-readiness-board)에서 exact-date readiness 확인
+1. [2026-04-22_next-session-prep](/market-intel/daily/2026-04-22_next-session-prep)
 2. [portfolio pilot review dashboard](/market-intel/research/portfolio-pilot-review-dashboard)
 3. [portfolio pilot batch — additional samples](/market-intel/research/portfolio-pilot-batch-additional-samples)
 4. [predictive replay and review system](/market-intel/workflows/predictive-replay-and-review-system)
-- latest prep fallback: [2026-04-22_next-session-prep](/market-intel/daily/2026-04-22_next-session-prep)
 
 ## 먼저 확인
-- [daily workflow](/market-intel/daily/)
-- [직전 장 validated recap — 2026-04-22_top30_recap](/market-intel/daily/2026-04-22_top30_recap)
-- [직전 장 close input — 2026-04-22_evening-briefing-input](/market-intel/daily/2026-04-22_evening-briefing-input)
+- [daily workspace](/market-intel/daily/)
+- [validated recap — 2026-04-22_top30_recap](/market-intel/daily/2026-04-22_top30_recap)
+- [close input — 2026-04-22_evening-briefing-input](/market-intel/daily/2026-04-22_evening-briefing-input)
 
 ## 용어 정리
-- `오늘 세션 prep`이 먼저 준비돼 있어야 예측 후보 해석이 현재 시점과 맞는다.
-- `직전 장 validated recap`은 전일 주도 군집 확인용 anchor다.
-- `직전 장 close input`은 전일 맥락을 붙이는 보조 입력이다.
-
-## 자주 쓰는 링크
-- [portfolio pilot review dashboard](/market-intel/research/portfolio-pilot-review-dashboard)
-- [portfolio pilot batch — additional samples](/market-intel/research/portfolio-pilot-batch-additional-samples)
-- [predictive replay and review system](/market-intel/workflows/predictive-replay-and-review-system)
-- [replay — 2026-04-14 NVIDIA Ising](/market-intel/research/replay-2026-04-14-nvidia-ising)
-- [replay — 2026-04-13 Anthropic Mythos · banks](/market-intel/research/replay-2026-04-13-anthropic-mythos-banks)
-- [US to KR bridge — 2026-04-16 Mythos · banks](/market-intel/daily/2026-04-16_us-to-kr-bridge-mythos-banks)
+- 예측 후보 검토 전에 **현재 세션 prep이 exact-date로 있는지** 먼저 확인해야 한다.
+- exact-date prep이 없으면 fallback prep을 보더라도 상태는 `준비 완료`가 아니다.
+- replay / dashboard는 readiness 확인 뒤 들어가는 보조 작업공간이다.

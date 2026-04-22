@@ -1,5 +1,6 @@
 export const MARKET_INTEL_EXPLORER_KEEP = new Set([
   "market-intel/MARKET_INTEL_RECENT_CHANGES",
+  "market-intel/current-readiness-board",
   "market-intel/market-intel-progress-big-picture",
   "market-intel/daily/index",
   "market-intel/research/prediction-workspace",
@@ -18,12 +19,13 @@ export const MARKET_INTEL_EXPLORER_LABELS: Record<string, string> = {
   "events": "Events",
   "entities": "Stocks",
   "MARKET_INTEL_RECENT_CHANGES": "최근 변경 로그",
+  "current-readiness-board": "진행상황판",
   "market-intel-progress-big-picture": "큰그림",
   "index": "Daily Workspace",
   "prediction-workspace": "Prediction Workspace",
   "portfolio-pilot-review-dashboard": "예측 후보 대시보드",
   "predictive-replay-and-review-system": "Predictive Replay",
-  "2026-04-22_next-session-prep": "latest prep fallback",
+  "2026-04-22_next-session-prep": "fallback prep (2026-04-22)",
   "2026-04-22_top30_recap": "직전 장 validated recap",
   "2026-04-22_evening-briefing-input": "직전 장 close input",
 }

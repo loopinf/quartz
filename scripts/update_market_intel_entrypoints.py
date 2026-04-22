@@ -4,7 +4,7 @@ from __future__ import annotations
 import argparse
 import re
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import date, datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -24,26 +24,31 @@ class NoteRef:
 
 
 @dataclass(frozen=True)
+class DocStatus:
+    code: str
+    label: str
+    expected_slug: str
+    note: NoteRef | None
+    latest_fallback: NoteRef | None
+    summary: str
+
+
+@dataclass(frozen=True)
 class CurrentState:
     now: datetime
     today_date: str
     today_label: str
     phase: str
-    expected_prep_slug: str
+    checklist_title: str
+    required_prep_date: str
+    required_recap_date: str
+    required_close_input_date: str
     required_prep: NoteRef | None
+    required_recap: NoteRef | None
+    required_close_input: NoteRef | None
     latest_prep: NoteRef | None
-    recap: NoteRef | None
-    close_input: NoteRef | None
-
-
-@dataclass(frozen=True)
-class DocStatus:
-    code: str
-    label: str
-    summary: str
-    target_slug: str
-    note: NoteRef | None
-    fallback: NoteRef | None = None
+    latest_validated_recap: NoteRef | None
+    latest_close_input: NoteRef | None
 
 
 def parse_args() -> argparse.Namespace:
@@ -84,6 +89,20 @@ def parse_frontmatter(path: Path) -> dict[str, str]:
     return frontmatter
 
 
+def previous_trading_day(day: date) -> date:
+    cursor = day - timedelta(days=1)
+    while cursor.weekday() >= 5:
+        cursor -= timedelta(days=1)
+    return cursor
+
+
+def next_trading_day(day: date) -> date:
+    cursor = day + timedelta(days=1)
+    while cursor.weekday() >= 5:
+        cursor += timedelta(days=1)
+    return cursor
+
+
 def iter_matching_notes(daily_dir: Path, suffix: str, *, require_validated: bool = False) -> list[NoteRef]:
     matches: list[NoteRef] = []
     for path in daily_dir.glob(f"*_{suffix}.md"):
@@ -97,8 +116,7 @@ def iter_matching_notes(daily_dir: Path, suffix: str, *, require_validated: bool
             frontmatter = parse_frontmatter(path)
             if frontmatter.get("validation_status") != "validated":
                 continue
-        slug = path.stem
-        matches.append(NoteRef(date=date_part, slug=slug, title=slug, path=path))
+        matches.append(NoteRef(date=date_part, slug=path.stem, title=path.stem, path=path))
     return sorted(matches, key=lambda item: item.date)
 
 
@@ -107,88 +125,85 @@ def find_latest_note(
     suffix: str,
     *,
     require_validated: bool = False,
-    before_date: str | None = None,
-    include_before_date: bool = True,
     exact_date: str | None = None,
+    on_or_before: str | None = None,
 ) -> NoteRef | None:
     matches = iter_matching_notes(daily_dir, suffix, require_validated=require_validated)
     filtered: list[NoteRef] = []
     for item in matches:
         if exact_date is not None and item.date != exact_date:
             continue
-        if before_date is not None:
-            if include_before_date:
-                if item.date > before_date:
-                    continue
-            else:
-                if item.date >= before_date:
-                    continue
+        if on_or_before is not None and item.date > on_or_before:
+            continue
         filtered.append(item)
     return max(filtered, key=lambda item: item.date, default=None)
 
 
 def build_state(vault_market_intel: Path) -> CurrentState:
     now = datetime.now(KST)
-    today_date = now.strftime("%Y-%m-%d")
+    today = now.date()
+    today_date = today.strftime("%Y-%m-%d")
     phase = market_phase(now)
     daily_dir = vault_market_intel / "daily"
 
-    required_prep = find_latest_note(daily_dir, "next-session-prep", exact_date=today_date)
-    latest_prep = find_latest_note(daily_dir, "next-session-prep")
-
-    recap_before_today = find_latest_note(
-        daily_dir,
-        "top30_recap",
-        require_validated=True,
-        before_date=today_date,
-        include_before_date=False,
-    )
-    recap_on_or_before_today = find_latest_note(
-        daily_dir,
-        "top30_recap",
-        require_validated=True,
-        before_date=today_date,
-        include_before_date=True,
-    )
-    close_before_today = find_latest_note(
-        daily_dir,
-        "evening-briefing-input",
-        before_date=today_date,
-        include_before_date=False,
-    )
-    close_on_or_before_today = find_latest_note(
-        daily_dir,
-        "evening-briefing-input",
-        before_date=today_date,
-        include_before_date=True,
-    )
-
     if phase == "장후":
-        recap = recap_on_or_before_today
-        close_input = close_on_or_before_today
+        required_prep_date = next_trading_day(today).strftime("%Y-%m-%d")
+        required_recap_date = today_date
+        required_close_input_date = today_date
+        checklist_title = "다음 세션 준비 상태"
     else:
-        recap = recap_before_today
-        close_input = close_before_today
+        prior = previous_trading_day(today)
+        required_prep_date = today_date
+        required_recap_date = prior.strftime("%Y-%m-%d")
+        required_close_input_date = prior.strftime("%Y-%m-%d")
+        checklist_title = "오늘 장전 준비 상태"
+
+    required_prep = find_latest_note(daily_dir, "next-session-prep", exact_date=required_prep_date)
+    required_recap = find_latest_note(
+        daily_dir,
+        "top30_recap",
+        require_validated=True,
+        exact_date=required_recap_date,
+    )
+    required_close_input = find_latest_note(
+        daily_dir,
+        "evening-briefing-input",
+        exact_date=required_close_input_date,
+    )
+
+    latest_prep = find_latest_note(daily_dir, "next-session-prep")
+    latest_validated_recap = find_latest_note(
+        daily_dir,
+        "top30_recap",
+        require_validated=True,
+        on_or_before=required_recap_date,
+    )
+    latest_close_input = find_latest_note(
+        daily_dir,
+        "evening-briefing-input",
+        on_or_before=required_close_input_date,
+    )
 
     return CurrentState(
         now=now,
         today_date=today_date,
         today_label=current_label(now),
         phase=phase,
-        expected_prep_slug=f"{today_date}_next-session-prep",
+        checklist_title=checklist_title,
+        required_prep_date=required_prep_date,
+        required_recap_date=required_recap_date,
+        required_close_input_date=required_close_input_date,
         required_prep=required_prep,
+        required_recap=required_recap,
+        required_close_input=required_close_input,
         latest_prep=latest_prep,
-        recap=recap,
-        close_input=close_input,
+        latest_validated_recap=latest_validated_recap,
+        latest_close_input=latest_close_input,
     )
 
 
-def rel_link(note: NoteRef | None) -> str:
+def note_link(note: NoteRef | None) -> str:
     return f"/market-intel/daily/{note.slug}" if note else "/market-intel/daily/"
-
-
-def note_text(note: NoteRef | None, fallback: str) -> str:
-    return note.slug if note else fallback
 
 
 def current_label_span(state: CurrentState) -> str:
@@ -198,48 +213,45 @@ def current_label_span(state: CurrentState) -> str:
     )
 
 
-def current_date_span(state: CurrentState) -> str:
-    return f'<span data-mi-current-date="1">{state.today_date}</span>'
-
-
-def readiness_doc_statuses(state: CurrentState) -> list[DocStatus]:
+def required_doc_statuses(state: CurrentState) -> list[DocStatus]:
     statuses: list[DocStatus] = []
+
     if state.required_prep:
         statuses.append(
             DocStatus(
                 code="READY",
                 label="오늘 세션 prep",
-                summary=f"{state.required_prep.slug} 문서가 현재 세션용으로 준비되어 있다.",
-                target_slug=state.expected_prep_slug,
+                expected_slug=f"{state.required_prep_date}_next-session-prep",
                 note=state.required_prep,
+                latest_fallback=state.latest_prep if state.latest_prep != state.required_prep else None,
+                summary=f"오늘 세션용 prep가 {state.required_prep.slug}로 준비되어 있다.",
             )
         )
     else:
-        fallback = state.latest_prep
-        fallback_summary = (
-            f"최신 fallback은 {fallback.slug}이지만 오늘 세션용 문서는 아직 없다."
-            if fallback
-            else "fallback으로 쓸 prep도 아직 없다."
-        )
         statuses.append(
             DocStatus(
                 code="MISSING",
                 label="오늘 세션 prep",
-                summary=f"target은 {state.expected_prep_slug}인데 아직 없다. {fallback_summary}",
-                target_slug=state.expected_prep_slug,
+                expected_slug=f"{state.required_prep_date}_next-session-prep",
                 note=None,
-                fallback=fallback,
+                latest_fallback=state.latest_prep,
+                summary=(
+                    f"필요 문서는 {state.required_prep_date}_next-session-prep인데 아직 없다."
+                    if state.latest_prep
+                    else f"필요 문서는 {state.required_prep_date}_next-session-prep인데 fallback으로 쓸 prep도 없다."
+                ),
             )
         )
 
-    if state.recap:
+    if state.required_recap:
         statuses.append(
             DocStatus(
                 code="READY",
                 label="직전 장 validated recap",
-                summary=f"현재 세션 바로 직전 장 기준 validated recap은 {state.recap.slug}이다.",
-                target_slug=state.recap.slug,
-                note=state.recap,
+                expected_slug=f"{state.required_recap_date}_top30_recap",
+                note=state.required_recap,
+                latest_fallback=state.latest_validated_recap if state.latest_validated_recap != state.required_recap else None,
+                summary=f"직전 장 기준 validated recap가 {state.required_recap.slug}로 준비되어 있다.",
             )
         )
     else:
@@ -247,20 +259,26 @@ def readiness_doc_statuses(state: CurrentState) -> list[DocStatus]:
             DocStatus(
                 code="MISSING",
                 label="직전 장 validated recap",
-                summary="직전 장 기준 validated recap을 찾지 못했다.",
-                target_slug="",
+                expected_slug=f"{state.required_recap_date}_top30_recap",
                 note=None,
+                latest_fallback=state.latest_validated_recap,
+                summary=(
+                    f"필요 문서는 {state.required_recap_date}_top30_recap인데 exact-date validated recap가 없다."
+                    if state.latest_validated_recap
+                    else f"필요 문서는 {state.required_recap_date}_top30_recap인데 validated recap 자체를 찾지 못했다."
+                ),
             )
         )
 
-    if state.close_input:
+    if state.required_close_input:
         statuses.append(
             DocStatus(
                 code="READY",
                 label="직전 장 close input",
-                summary=f"현재 세션 직전 장 close input은 {state.close_input.slug}이다.",
-                target_slug=state.close_input.slug,
-                note=state.close_input,
+                expected_slug=f"{state.required_close_input_date}_evening-briefing-input",
+                note=state.required_close_input,
+                latest_fallback=state.latest_close_input if state.latest_close_input != state.required_close_input else None,
+                summary=f"직전 장 close input이 {state.required_close_input.slug}로 준비되어 있다.",
             )
         )
     else:
@@ -268,72 +286,113 @@ def readiness_doc_statuses(state: CurrentState) -> list[DocStatus]:
             DocStatus(
                 code="MISSING",
                 label="직전 장 close input",
-                summary="직전 장 close input을 찾지 못했다.",
-                target_slug="",
+                expected_slug=f"{state.required_close_input_date}_evening-briefing-input",
                 note=None,
+                latest_fallback=state.latest_close_input,
+                summary=(
+                    f"필요 문서는 {state.required_close_input_date}_evening-briefing-input인데 exact-date close input이 없다."
+                    if state.latest_close_input
+                    else f"필요 문서는 {state.required_close_input_date}_evening-briefing-input인데 close input 자체를 찾지 못했다."
+                ),
             )
         )
+
     return statuses
 
 
-def readiness_label(state: CurrentState) -> tuple[str, int, int]:
-    statuses = readiness_doc_statuses(state)
-    ready_count = sum(1 for status in statuses if status.code == "READY")
+def readiness_summary(state: CurrentState) -> tuple[str, int, int]:
+    statuses = required_doc_statuses(state)
+    ready_count = sum(1 for item in statuses if item.code == "READY")
     total = len(statuses)
     if ready_count == total:
-        return "ready", ready_count, total
+        return "완료", ready_count, total
     if ready_count == 0:
-        return "not-ready", ready_count, total
-    return "partial", ready_count, total
+        return "미준비", ready_count, total
+    return "부분준비", ready_count, total
 
 
-def readiness_lines(state: CurrentState, *, root_prefix: str = "/market-intel/daily/") -> str:
+def render_status_lines(state: CurrentState) -> str:
     lines: list[str] = []
-    for status in readiness_doc_statuses(state):
-        if status.note:
-            lines.append(f"- `{status.code}` {status.label}: [{status.note.slug}]({root_prefix}{status.note.slug})")
+    for item in required_doc_statuses(state):
+        if item.note:
+            lines.append(f"- `{item.code}` {item.label}: [{item.note.slug}]({note_link(item.note)})")
         else:
-            lines.append(f"- `{status.code}` {status.label}: target `{status.target_slug}`")
-        lines.append(f"  - {status.summary}")
-        if status.fallback:
-            lines.append(f"  - latest fallback: [{status.fallback.slug}]({root_prefix}{status.fallback.slug})")
+            lines.append(f"- `{item.code}` {item.label}: 필요 문서 `{item.expected_slug}`")
+        lines.append(f"  - {item.summary}")
+        if item.latest_fallback:
+            lines.append(f"  - 최신 fallback: [{item.latest_fallback.slug}]({note_link(item.latest_fallback)})")
     return "\n".join(lines)
 
 
-def next_action_lines(state: CurrentState) -> str:
-    lines: list[str] = []
-    if state.required_prep:
-        lines.append(f"1. [오늘 세션 prep 열기](/market-intel/daily/{state.required_prep.slug})")
-    elif state.latest_prep:
-        lines.append("1. [daily workspace에서 오늘 세션 prep 상태 확인](/market-intel/daily/)")
-        lines.append(f"2. fallback으로 [{state.latest_prep.slug}](/market-intel/daily/{state.latest_prep.slug}) 참고")
-    else:
-        lines.append("1. [daily workspace](/market-intel/daily/)에서 오늘 세션 prep부터 만들어야 한다")
+def render_latest_lines(state: CurrentState) -> str:
+    lines = [
+        f"- 최신 prep: [{state.latest_prep.slug}]({note_link(state.latest_prep)})" if state.latest_prep else "- 최신 prep: 없음",
+        (
+            f"- 최신 validated recap: [{state.latest_validated_recap.slug}]({note_link(state.latest_validated_recap)})"
+            if state.latest_validated_recap
+            else "- 최신 validated recap: 없음"
+        ),
+        (
+            f"- 최신 close input: [{state.latest_close_input.slug}]({note_link(state.latest_close_input)})"
+            if state.latest_close_input
+            else "- 최신 close input: 없음"
+        ),
+    ]
+    return "\n".join(lines)
 
-    start_index = len(lines) + 1
-    if state.recap:
-        lines.append(f"{start_index}. [직전 장 validated recap 확인](/market-intel/daily/{state.recap.slug})")
-        start_index += 1
-    if state.close_input:
-        lines.append(f"{start_index}. [직전 장 close input 확인](/market-intel/daily/{state.close_input.slug})")
-        start_index += 1
-    lines.append(f"{start_index}. [prediction workspace](/market-intel/research/prediction-workspace)")
+
+def render_recent_list(title: str, notes: list[NoteRef]) -> str:
+    lines = [f"### {title}"]
+    if not notes:
+        lines.append("- 없음")
+    else:
+        for note in notes:
+            lines.append(f"- [{note.slug}]({note_link(note)})")
+    return "\n".join(lines)
+
+
+def latest_notes_for_list(daily_dir: Path, suffix: str, *, require_validated: bool = False, limit: int = 3) -> list[NoteRef]:
+    notes = iter_matching_notes(daily_dir, suffix, require_validated=require_validated)
+    return sorted(notes, key=lambda item: item.date, reverse=True)[:limit]
+
+
+def next_action_lines(state: CurrentState) -> str:
+    lines: list[str] = ["1. [진행상황판에서 exact-date readiness 확인](/market-intel/current-readiness-board)"]
+    if state.required_prep:
+        lines.append(f"2. [오늘 세션 prep 열기]({note_link(state.required_prep)})")
+    elif state.latest_prep:
+        lines.append(f"2. [fallback prep 확인]({note_link(state.latest_prep)})")
+    else:
+        lines.append("2. [/market-intel/daily/ 에서 오늘 세션 prep 생성 필요](/market-intel/daily/)")
+
+    idx = len(lines) + 1
+    if state.required_recap:
+        lines.append(f"{idx}. [직전 장 validated recap]({note_link(state.required_recap)})")
+    elif state.latest_validated_recap:
+        lines.append(f"{idx}. [fallback validated recap]({note_link(state.latest_validated_recap)})")
+    idx = len(lines) + 1
+    if state.required_close_input:
+        lines.append(f"{idx}. [직전 장 close input]({note_link(state.required_close_input)})")
+    elif state.latest_close_input:
+        lines.append(f"{idx}. [fallback close input]({note_link(state.latest_close_input)})")
+    idx = len(lines) + 1
+    lines.append(f"{idx}. [prediction workspace](/market-intel/research/prediction-workspace)")
     return "\n".join(lines)
 
 
 def terminology_block() -> str:
-    return """- `오늘 세션 prep`: 오늘 장 대응용 next-session-prep 문서
-- `직전 장 validated recap`: 지금 세션 바로 이전 장의 검증 완료 TOP30 recap
-- `직전 장 close input`: 직전 장 마감 뒤 남긴 evening briefing input
-- `준비도`: 지금 시점에 필요한 핵심 3문서(prep / recap / close input)가 몇 개 준비됐는지"""
+    return """- `필수 문서`: 현재 세션 시점에 exact-date로 준비돼 있어야 하는 문서
+- `최신 fallback`: exact-date 문서가 없을 때 참고 가능한 가장 최근 usable 문서
+- `직전 장`: 단순히 최근에 작업한 문서가 아니라, 현재 세션 바로 이전 거래일 기준
+- `준비도`: prep / validated recap / close input 3개 중 몇 개가 exact-date 기준으로 준비됐는지"""
 
 
 def root_markdown(state: CurrentState) -> str:
     runtime_now_html = build_runtime_now_html(state.today_label)
-    readiness_state, ready_count, total_count = readiness_label(state)
+    readiness_text, ready_count, total_count = readiness_summary(state)
     return f"""---
 title: Market Intel Start
-summary: 8081 루트 시작점. 오늘 세션 준비도와 최신 usable 문서를 가장 먼저 보여준다.
+summary: 8081 루트 시작점. 현재 세션에 필요한 문서가 exact-date 기준으로 준비됐는지 자동으로 먼저 보여준다.
 ---
 
 # Market Intel Start
@@ -341,40 +400,37 @@ summary: 8081 루트 시작점. 오늘 세션 준비도와 최신 usable 문서�
 ## 지금 준비 상태 ({current_label_span(state)})
 - 실시간 KST 기준: {runtime_now_html}
 - 현재 세션: `{state.today_date}` / `{state.phase}`
-- 준비도: `{readiness_state}` = `{ready_count} / {total_count} ready`
-- 기준 문서 순서: `오늘 세션 prep → 직전 장 validated recap → 직전 장 close input`
+- {state.checklist_title}: `{readiness_text}` = `{ready_count} / {total_count}`
+- [진행상황판 바로 열기](/market-intel/current-readiness-board)
+- 자동 확인 기준: `오늘/다음 세션 prep`, `직전 장 validated recap`, `직전 장 close input`이 exact-date로 있는지 확인
 
-{readiness_lines(state)}
+{render_status_lines(state)}
 
 ## 지금 바로 할 일
 {next_action_lines(state)}
 
-## 해석 기준
-- 이 페이지에서 `오늘`은 **현재 KST 운영 날짜**를 뜻한다.
-- prep은 **오늘 세션 기준 exact date match**가 있어야 `READY`다.
-- recap / close input은 **현재 세션 바로 직전 장 기준** 문서를 보여준다.
+## 최신 usable 문서
+{render_latest_lines(state)}
 
 ## 용어 정리
 {terminology_block()}
 
 ## 섹션 바로가기
 - [Market Intel home](/market-intel/)
+- [진행상황판](/market-intel/current-readiness-board)
 - [daily workspace](/market-intel/daily/)
 - [prediction workspace](/market-intel/research/prediction-workspace)
-- [recent changes](/market-intel/MARKET_INTEL_RECENT_CHANGES)
-- [research folder](/market-intel/research/)
-- [workflow folder](/market-intel/workflows/)
-- [events folder](/market-intel/events/)
-- [entities folder](/market-intel/entities/)
+- [최근 변경 로그](/market-intel/MARKET_INTEL_RECENT_CHANGES)
+- [큰그림](/market-intel/market-intel-progress-big-picture)
 """
 
 
 def market_home_markdown(state: CurrentState) -> str:
     runtime_now_html = build_runtime_now_html(state.today_label)
-    readiness_state, ready_count, total_count = readiness_label(state)
+    readiness_text, ready_count, total_count = readiness_summary(state)
     return f"""---
 title: Market Intel Home
-summary: 오늘 세션 준비 상태를 먼저 보여주고, 필요한 문서가 최신인지 바로 확인하게 하는 운영 홈.
+summary: 현재 세션 필수 문서가 자동으로 준비됐는지 먼저 확인하고, fallback과 다음 액션을 바로 여는 운영 홈.
 ---
 
 # Market Intel Home
@@ -382,23 +438,28 @@ summary: 오늘 세션 준비 상태를 먼저 보여주고, 필요한 문서가
 ## 오늘 준비 상태 ({current_label_span(state)})
 - 실시간 KST 기준: {runtime_now_html}
 - 현재 세션: `{state.today_date}` / `{state.phase}`
-- 준비도: `{readiness_state}` = `{ready_count} / {total_count} ready`
+- {state.checklist_title}: `{readiness_text}` = `{ready_count} / {total_count}`
+- [진행상황판](/market-intel/current-readiness-board)
 - 최근 변경 로그: [MARKET_INTEL_RECENT_CHANGES](/market-intel/MARKET_INTEL_RECENT_CHANGES)
 
-{readiness_lines(state)}
+{render_status_lines(state)}
 
 ## 오늘 바로 할 일
 {next_action_lines(state)}
 
+## 최신 usable 문서
+{render_latest_lines(state)}
+
 ## 왜 이렇게 보나
-- index에서는 **지금 필요한 문서가 최신인지**를 먼저 확인해야 한다.
-- `직전`은 "직전 작업한 문서"가 아니라 **현재 세션 바로 직전 장 기준 문서**를 뜻한다.
-- 오늘 prep이 없으면 fallback을 보여주되, `MISSING`으로 명확히 남긴다.
+- 수동으로 "어제 문서 열어보자"가 아니라, **현재 시점에 필요한 exact-date 문서가 있는지 자동으로 확인**해야 한다.
+- exact-date 문서가 없으면 fallback은 보여주되, 준비 완료로 취급하지 않는다.
+- `직전`은 직전 작업 문서가 아니라 **현재 세션 바로 직전 거래일 기준**이다.
 
 ## 용어 정리
 {terminology_block()}
 
 ## 큰그림 / 작업공간
+- [진행상황판](/market-intel/current-readiness-board)
 - [daily workspace](/market-intel/daily/)
 - [prediction workspace](/market-intel/research/prediction-workspace)
 - [portfolio pilot review dashboard](/market-intel/research/portfolio-pilot-review-dashboard)
@@ -408,53 +469,36 @@ summary: 오늘 세션 준비 상태를 먼저 보여주고, 필요한 문서가
 """
 
 
-def daily_index_markdown(state: CurrentState) -> str:
+def daily_index_markdown(state: CurrentState, daily_dir: Path) -> str:
     runtime_now_html = build_runtime_now_html(state.today_label)
-    readiness_state, ready_count, total_count = readiness_label(state)
-    latest_prep_line = (
-        f"- latest prep fallback: [{state.latest_prep.slug}](/market-intel/daily/{state.latest_prep.slug})"
-        if state.latest_prep and not state.required_prep
-        else ""
-    )
+    readiness_text, ready_count, total_count = readiness_summary(state)
+    recent_prep = latest_notes_for_list(daily_dir, "next-session-prep", limit=4)
+    recent_recap = latest_notes_for_list(daily_dir, "top30_recap", require_validated=True, limit=4)
+    recent_close = latest_notes_for_list(daily_dir, "evening-briefing-input", limit=4)
     return f"""---
 title: daily workspace
-summary: 오늘 세션 준비도와 핵심 daily 문서 상태를 한 번에 확인하는 허브.
+summary: 현재 세션 필수 daily 문서가 exact-date 기준으로 준비됐는지 한 번에 확인하는 허브.
 ---
 
 # Daily Workspace
 
-## 오늘 세션 readiness ({current_label_span(state)})
+## {state.checklist_title} ({current_label_span(state)})
 - 실시간 KST 기준: {runtime_now_html}
-- 준비도: `{readiness_state}` = `{ready_count} / {total_count} ready`
-- 확인 순서: `오늘 세션 prep → 직전 장 validated recap → 직전 장 close input`
+- 준비도: `{readiness_text}` = `{ready_count} / {total_count}`
+- [진행상황판](/market-intel/current-readiness-board)
+- 자동 확인 순서: `prep → validated recap → close input`
 
-{readiness_lines(state)}
-{latest_prep_line}
+{render_status_lines(state)}
 
 ## 오늘 바로 열 것
 {next_action_lines(state)}
 
 ## 최근 usable 기록
-### Session prep
-- [{note_text(state.required_prep or state.latest_prep, 'prep 문서 없음')}](/market-intel/daily/{(state.required_prep or state.latest_prep).slug if (state.required_prep or state.latest_prep) else ''})
-- [2026-04-20_next-session-prep](/market-intel/daily/2026-04-20_next-session-prep)
-- [2026-04-17_next-session-prep](/market-intel/daily/2026-04-17_next-session-prep)
+{render_recent_list('Session prep', recent_prep)}
 
-### Validated recap
-- [{note_text(state.recap, 'validated recap 없음')}](/market-intel/daily/{state.recap.slug if state.recap else ''})
-- [2026-04-21_top30_recap](/market-intel/daily/2026-04-21_top30_recap)
-- [2026-04-20_top30_recap](/market-intel/daily/2026-04-20_top30_recap)
+{render_recent_list('Validated recap', recent_recap)}
 
-### Close input
-- [{note_text(state.close_input, 'close input 없음')}](/market-intel/daily/{state.close_input.slug if state.close_input else ''})
-- [2026-04-21_evening-briefing-input](/market-intel/daily/2026-04-21_evening-briefing-input)
-- [2026-04-20_evening-briefing-input](/market-intel/daily/2026-04-20_evening-briefing-input)
-
-### Supporting context
-- [2026-04-16_news_recap](/market-intel/daily/2026-04-16_news_recap)
-- [2026-04-16_high-signal-watchlist](/market-intel/daily/2026-04-16_high-signal-watchlist)
-- [2026-04-15_us-to-kr-bridge](/market-intel/daily/2026-04-15_us-to-kr-bridge)
-- [2026-04-16_us-to-kr-bridge-mythos-banks](/market-intel/daily/2026-04-16_us-to-kr-bridge-mythos-banks)
+{render_recent_list('Close input', recent_close)}
 
 ## 용어 정리
 {terminology_block()}
@@ -463,48 +507,92 @@ summary: 오늘 세션 준비도와 핵심 daily 문서 상태를 한 번에 확
 
 def prediction_workspace_markdown(state: CurrentState) -> str:
     runtime_now_html = build_runtime_now_html(state.today_label)
-    prep_line = (
-        f"1. [오늘 세션 prep — {state.required_prep.slug}](/market-intel/daily/{state.required_prep.slug})"
-        if state.required_prep
-        else "1. [daily workspace에서 오늘 세션 prep 상태 확인](/market-intel/daily/)"
-    )
-    fallback_line = (
-        f"- latest prep fallback: [{state.latest_prep.slug}](/market-intel/daily/{state.latest_prep.slug})"
-        if state.latest_prep and not state.required_prep
-        else ""
-    )
+    prep_link = note_link(state.required_prep or state.latest_prep)
+    prep_label = (state.required_prep or state.latest_prep).slug if (state.required_prep or state.latest_prep) else "prep 없음"
+    recap_link = note_link(state.required_recap or state.latest_validated_recap)
+    recap_label = (state.required_recap or state.latest_validated_recap).slug if (state.required_recap or state.latest_validated_recap) else "없음"
+    close_link = note_link(state.required_close_input or state.latest_close_input)
+    close_label = (state.required_close_input or state.latest_close_input).slug if (state.required_close_input or state.latest_close_input) else "없음"
     return f"""---
 title: prediction workspace
-summary: 오늘 세션 prep 준비 여부를 먼저 확인한 뒤 예측 후보와 복기로 이어지는 작업공간.
+summary: 예측 후보 검토 전에 현재 세션 준비 상태를 먼저 확인하는 prediction 허브.
 ---
 
 # Prediction Workspace
 
 ## 오늘 바로 할 일 ({current_label_span(state)})
 - 실시간 KST 기준: {runtime_now_html}
-{prep_line}
+- 먼저 [진행상황판](/market-intel/current-readiness-board)에서 exact-date readiness 확인
+1. [{prep_label}]({prep_link})
 2. [portfolio pilot review dashboard](/market-intel/research/portfolio-pilot-review-dashboard)
 3. [portfolio pilot batch — additional samples](/market-intel/research/portfolio-pilot-batch-additional-samples)
 4. [predictive replay and review system](/market-intel/workflows/predictive-replay-and-review-system)
-{fallback_line}
 
 ## 먼저 확인
-- [daily workflow](/market-intel/daily/)
-- [직전 장 validated recap — {note_text(state.recap, '없음')}](/market-intel/daily/{state.recap.slug if state.recap else ''})
-- [직전 장 close input — {note_text(state.close_input, '없음')}](/market-intel/daily/{state.close_input.slug if state.close_input else ''})
+- [daily workspace](/market-intel/daily/)
+- [validated recap — {recap_label}]({recap_link})
+- [close input — {close_label}]({close_link})
 
 ## 용어 정리
-- `오늘 세션 prep`이 먼저 준비돼 있어야 예측 후보 해석이 현재 시점과 맞는다.
-- `직전 장 validated recap`은 전일 주도 군집 확인용 anchor다.
-- `직전 장 close input`은 전일 맥락을 붙이는 보조 입력이다.
+- 예측 후보 검토 전에 **현재 세션 prep이 exact-date로 있는지** 먼저 확인해야 한다.
+- exact-date prep이 없으면 fallback prep을 보더라도 상태는 `준비 완료`가 아니다.
+- replay / dashboard는 readiness 확인 뒤 들어가는 보조 작업공간이다.
+"""
 
-## 자주 쓰는 링크
-- [portfolio pilot review dashboard](/market-intel/research/portfolio-pilot-review-dashboard)
-- [portfolio pilot batch — additional samples](/market-intel/research/portfolio-pilot-batch-additional-samples)
-- [predictive replay and review system](/market-intel/workflows/predictive-replay-and-review-system)
-- [replay — 2026-04-14 NVIDIA Ising](/market-intel/research/replay-2026-04-14-nvidia-ising)
-- [replay — 2026-04-13 Anthropic Mythos · banks](/market-intel/research/replay-2026-04-13-anthropic-mythos-banks)
-- [US to KR bridge — 2026-04-16 Mythos · banks](/market-intel/daily/2026-04-16_us-to-kr-bridge-mythos-banks)
+
+def current_session_status_markdown(state: CurrentState) -> str:
+    runtime_now_html = build_runtime_now_html(state.today_label)
+    readiness_text, ready_count, total_count = readiness_summary(state)
+    return f"""---
+title: current readiness board
+summary: 지금 세션 기준으로 필요한 핵심 daily 문서가 자동으로 확인됐는지 한눈에 보는 현황판.
+---
+
+# Current Readiness Board
+
+## 지금 세션 자동 판정 ({current_label_span(state)})
+- 실시간 KST 기준: {runtime_now_html}
+- 현재 세션: `{state.today_date}` / `{state.phase}`
+- 상태판 기준: `{state.checklist_title}`
+- 준비도: `{readiness_text}` = `{ready_count} / {total_count}`
+- 이 현황판은 sync/build 때 자동 생성된다.
+
+## 자동 확인 결과
+{render_status_lines(state)}
+
+## 자동 확인이 실제로 들어가 있나
+- 자동 확인 트리거: `~/market-intel-site/scripts/sync-market-intel.sh`
+- 실제 판정 로직: `~/market-intel-site/scripts/update_market_intel_entrypoints.py`
+- 자동 판정 대상:
+  - `오늘/다음 세션 prep` = exact-date match
+  - `직전 장 validated recap` = exact-date + `validation_status: validated`
+  - `직전 장 close input` = exact-date match
+- 현재 반영 위치: `/`, `/market-intel/`, `/market-intel/daily/`, `/market-intel/research/prediction-workspace`, `/market-intel/current-readiness-board`
+- 한계: 이 확인은 **sync/build 시점 자동화**다. 즉 문서 존재 여부를 자동 판정해 표시하지만, 별도 cron 없이 매분 실시간 재판정하는 구조는 아니다.
+
+## 확인 기준
+- prep target: `{state.required_prep_date}_next-session-prep`
+- validated recap target: `{state.required_recap_date}_top30_recap`
+- close input target: `{state.required_close_input_date}_evening-briefing-input`
+- fallback은 참고용이지 readiness 충족으로 보지 않음
+
+## 최신 usable 문서
+{render_latest_lines(state)}
+
+## 이 페이지를 어떻게 써야 하나
+- 이 페이지는 **지금 세션에 필요한 문서가 최신인지**를 먼저 확인하는 운영 현황판이다.
+- `MISSING`이면 target 문서가 아직 없다는 뜻이고, fallback은 참고용일 뿐 target을 대체한 것으로 간주하지 않는다.
+- 장기 로드맵/큰그림은 [market-intel progress big picture](/market-intel/market-intel-progress-big-picture)에서 본다.
+- 실제 작업 시작은 [daily workspace](/market-intel/daily/)로 들어간다.
+
+## 다음 액션
+{next_action_lines(state)}
+
+## 관련 페이지
+- [Market Intel Home](/market-intel/)
+- [daily workspace](/market-intel/daily/)
+- [prediction workspace](/market-intel/research/prediction-workspace)
+- [market-intel progress big picture](/market-intel/market-intel-progress-big-picture)
 """
 
 
@@ -515,6 +603,7 @@ def ts_string(value: str) -> str:
 def current_ts(state: CurrentState) -> str:
     keep_entries: list[str] = [
         "market-intel/MARKET_INTEL_RECENT_CHANGES",
+        "market-intel/current-readiness-board",
         "market-intel/market-intel-progress-big-picture",
         "market-intel/daily/index",
         "market-intel/research/prediction-workspace",
@@ -523,6 +612,7 @@ def current_ts(state: CurrentState) -> str:
     ]
     labels: dict[str, str] = {
         "MARKET_INTEL_RECENT_CHANGES": "최근 변경 로그",
+        "current-readiness-board": "진행상황판",
         "market-intel-progress-big-picture": "큰그림",
         "index": "Daily Workspace",
         "prediction-workspace": "Prediction Workspace",
@@ -534,13 +624,19 @@ def current_ts(state: CurrentState) -> str:
         labels[state.required_prep.slug] = "오늘 세션 prep"
     elif state.latest_prep:
         keep_entries.append(f"market-intel/daily/{state.latest_prep.slug}")
-        labels[state.latest_prep.slug] = "latest prep fallback"
-    if state.recap:
-        keep_entries.append(f"market-intel/daily/{state.recap.slug}")
-        labels[state.recap.slug] = "직전 장 validated recap"
-    if state.close_input:
-        keep_entries.append(f"market-intel/daily/{state.close_input.slug}")
-        labels[state.close_input.slug] = "직전 장 close input"
+        labels[state.latest_prep.slug] = f"fallback prep ({state.latest_prep.date})"
+    if state.required_recap:
+        keep_entries.append(f"market-intel/daily/{state.required_recap.slug}")
+        labels[state.required_recap.slug] = "직전 장 validated recap"
+    elif state.latest_validated_recap:
+        keep_entries.append(f"market-intel/daily/{state.latest_validated_recap.slug}")
+        labels[state.latest_validated_recap.slug] = f"fallback recap ({state.latest_validated_recap.date})"
+    if state.required_close_input:
+        keep_entries.append(f"market-intel/daily/{state.required_close_input.slug}")
+        labels[state.required_close_input.slug] = "직전 장 close input"
+    elif state.latest_close_input:
+        keep_entries.append(f"market-intel/daily/{state.latest_close_input.slug}")
+        labels[state.latest_close_input.slug] = f"fallback close ({state.latest_close_input.date})"
 
     keep_block = "\n".join(f'  "{ts_string(item)}",' for item in keep_entries)
     label_lines = [
@@ -580,25 +676,25 @@ def main() -> int:
         raise SystemExit(f"site root not found: {site_root}")
 
     state = build_state(vault_market_intel)
+    daily_dir = vault_market_intel / "daily"
 
     write(site_root / "content/index.md", root_markdown(state))
     write(vault_market_intel / "index.md", market_home_markdown(state))
-    write(vault_market_intel / "daily/index.md", daily_index_markdown(state))
+    write(vault_market_intel / "daily/index.md", daily_index_markdown(state, daily_dir))
     write(vault_market_intel / "research/prediction-workspace.md", prediction_workspace_markdown(state))
+    write(vault_market_intel / "current-readiness-board.md", current_session_status_markdown(state))
     write(site_root / "market-intel-current.ts", current_ts(state))
 
-    readiness_state, ready_count, total_count = readiness_label(state)
+    readiness_text, ready_count, total_count = readiness_summary(state)
     print(f"Updated current Market Intel entrypoints for {state.today_label}")
-    print(f"  readiness: {readiness_state} ({ready_count}/{total_count})")
-    print(f"  expected_prep: {state.expected_prep_slug}")
-    if state.required_prep:
-        print(f"  required_prep: {state.required_prep.slug}")
-    if state.latest_prep:
-        print(f"  latest_prep: {state.latest_prep.slug}")
-    if state.recap:
-        print(f"  recap: {state.recap.slug}")
-    if state.close_input:
-        print(f"  close_input: {state.close_input.slug}")
+    print(f"  checklist: {state.checklist_title}")
+    print(f"  readiness: {readiness_text} ({ready_count}/{total_count})")
+    print(f"  required_prep: {state.required_prep_date} -> {state.required_prep.slug if state.required_prep else 'missing'}")
+    print(f"  required_recap: {state.required_recap_date} -> {state.required_recap.slug if state.required_recap else 'missing'}")
+    print(f"  required_close_input: {state.required_close_input_date} -> {state.required_close_input.slug if state.required_close_input else 'missing'}")
+    print(f"  latest_prep: {state.latest_prep.slug if state.latest_prep else 'missing'}")
+    print(f"  latest_validated_recap: {state.latest_validated_recap.slug if state.latest_validated_recap else 'missing'}")
+    print(f"  latest_close_input: {state.latest_close_input.slug if state.latest_close_input else 'missing'}")
     return 0
 
 

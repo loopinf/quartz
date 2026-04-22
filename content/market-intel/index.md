@@ -1,6 +1,6 @@
 ---
 title: Market Intel Home
-summary: 오늘 세션 준비 상태를 먼저 보여주고, 필요한 문서가 최신인지 바로 확인하게 하는 운영 홈.
+summary: 현재 세션 필수 문서가 자동으로 준비됐는지 먼저 확인하고, fallback과 다음 액션을 바로 여는 운영 홈.
 ---
 
 # Market Intel Home
@@ -27,36 +27,43 @@ summary: 오늘 세션 준비 상태를 먼저 보여주고, 필요한 문서가
 })();
 </script>
 - 현재 세션: `2026-04-23` / `장전`
-- 준비도: `partial` = `2 / 3 ready`
+- 오늘 장전 준비 상태: `부분준비` = `2 / 3`
+- [진행상황판](/market-intel/current-readiness-board)
 - 최근 변경 로그: [MARKET_INTEL_RECENT_CHANGES](/market-intel/MARKET_INTEL_RECENT_CHANGES)
 
-- `MISSING` 오늘 세션 prep: target `2026-04-23_next-session-prep`
-  - target은 2026-04-23_next-session-prep인데 아직 없다. 최신 fallback은 2026-04-22_next-session-prep이지만 오늘 세션용 문서는 아직 없다.
-  - latest fallback: [2026-04-22_next-session-prep](/market-intel/daily/2026-04-22_next-session-prep)
+- `MISSING` 오늘 세션 prep: 필요 문서 `2026-04-23_next-session-prep`
+  - 필요 문서는 2026-04-23_next-session-prep인데 아직 없다.
+  - 최신 fallback: [2026-04-22_next-session-prep](/market-intel/daily/2026-04-22_next-session-prep)
 - `READY` 직전 장 validated recap: [2026-04-22_top30_recap](/market-intel/daily/2026-04-22_top30_recap)
-  - 현재 세션 바로 직전 장 기준 validated recap은 2026-04-22_top30_recap이다.
+  - 직전 장 기준 validated recap가 2026-04-22_top30_recap로 준비되어 있다.
 - `READY` 직전 장 close input: [2026-04-22_evening-briefing-input](/market-intel/daily/2026-04-22_evening-briefing-input)
-  - 현재 세션 직전 장 close input은 2026-04-22_evening-briefing-input이다.
+  - 직전 장 close input이 2026-04-22_evening-briefing-input로 준비되어 있다.
 
 ## 오늘 바로 할 일
-1. [daily workspace에서 오늘 세션 prep 상태 확인](/market-intel/daily/)
-2. fallback으로 [2026-04-22_next-session-prep](/market-intel/daily/2026-04-22_next-session-prep) 참고
-3. [직전 장 validated recap 확인](/market-intel/daily/2026-04-22_top30_recap)
-4. [직전 장 close input 확인](/market-intel/daily/2026-04-22_evening-briefing-input)
+1. [진행상황판에서 exact-date readiness 확인](/market-intel/current-readiness-board)
+2. [fallback prep 확인](/market-intel/daily/2026-04-22_next-session-prep)
+3. [직전 장 validated recap](/market-intel/daily/2026-04-22_top30_recap)
+4. [직전 장 close input](/market-intel/daily/2026-04-22_evening-briefing-input)
 5. [prediction workspace](/market-intel/research/prediction-workspace)
 
+## 최신 usable 문서
+- 최신 prep: [2026-04-22_next-session-prep](/market-intel/daily/2026-04-22_next-session-prep)
+- 최신 validated recap: [2026-04-22_top30_recap](/market-intel/daily/2026-04-22_top30_recap)
+- 최신 close input: [2026-04-22_evening-briefing-input](/market-intel/daily/2026-04-22_evening-briefing-input)
+
 ## 왜 이렇게 보나
-- index에서는 **지금 필요한 문서가 최신인지**를 먼저 확인해야 한다.
-- `직전`은 "직전 작업한 문서"가 아니라 **현재 세션 바로 직전 장 기준 문서**를 뜻한다.
-- 오늘 prep이 없으면 fallback을 보여주되, `MISSING`으로 명확히 남긴다.
+- 수동으로 "어제 문서 열어보자"가 아니라, **현재 시점에 필요한 exact-date 문서가 있는지 자동으로 확인**해야 한다.
+- exact-date 문서가 없으면 fallback은 보여주되, 준비 완료로 취급하지 않는다.
+- `직전`은 직전 작업 문서가 아니라 **현재 세션 바로 직전 거래일 기준**이다.
 
 ## 용어 정리
-- `오늘 세션 prep`: 오늘 장 대응용 next-session-prep 문서
-- `직전 장 validated recap`: 지금 세션 바로 이전 장의 검증 완료 TOP30 recap
-- `직전 장 close input`: 직전 장 마감 뒤 남긴 evening briefing input
-- `준비도`: 지금 시점에 필요한 핵심 3문서(prep / recap / close input)가 몇 개 준비됐는지
+- `필수 문서`: 현재 세션 시점에 exact-date로 준비돼 있어야 하는 문서
+- `최신 fallback`: exact-date 문서가 없을 때 참고 가능한 가장 최근 usable 문서
+- `직전 장`: 단순히 최근에 작업한 문서가 아니라, 현재 세션 바로 이전 거래일 기준
+- `준비도`: prep / validated recap / close input 3개 중 몇 개가 exact-date 기준으로 준비됐는지
 
 ## 큰그림 / 작업공간
+- [진행상황판](/market-intel/current-readiness-board)
 - [daily workspace](/market-intel/daily/)
 - [prediction workspace](/market-intel/research/prediction-workspace)
 - [portfolio pilot review dashboard](/market-intel/research/portfolio-pilot-review-dashboard)
