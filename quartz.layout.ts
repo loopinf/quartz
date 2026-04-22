@@ -1,5 +1,6 @@
 import { PageLayout, SharedLayout } from "./quartz/cfg"
 import * as Component from "./quartz/components"
+import { MARKET_INTEL_EXPLORER_KEEP, MARKET_INTEL_EXPLORER_LABELS } from "./market-intel-current"
 
 // components shared across all pages
 export const sharedPageComponents: SharedLayout = {
@@ -44,36 +45,11 @@ export const defaultContentPageLayout: PageLayout = {
       useSavedState: true,
       filterFn: (node) => {
         if (node.isFolder) return true
-        const keep = new Set([
-          "market-intel/MARKET_INTEL_RECENT_CHANGES",
-          "market-intel/market-intel-progress-big-picture",
-          "market-intel/daily/2026-04-21_evening-briefing-input",
-          "market-intel/daily/2026-04-20_top30_recap",
-          "market-intel/daily/2026-04-20_next-session-prep",
-          "market-intel/research/prediction-workspace",
-          "market-intel/research/portfolio-pilot-review-dashboard",
-          "market-intel/workflows/predictive-replay-and-review-system",
-        ])
-        return keep.has(node.slug)
+        return MARKET_INTEL_EXPLORER_KEEP.has(node.slug)
       },
       mapFn: (node) => {
-        const labels = {
-          "market-intel": "Market Intel Home",
-          "daily": "Daily",
-          "research": "Prediction / Research",
-          "workflows": "Workflows",
-          "events": "Events",
-          "entities": "Stocks",
-          "MARKET_INTEL_RECENT_CHANGES": "최근 변경 로그",
-          "market-intel-progress-big-picture": "큰그림",
-          "2026-04-21_evening-briefing-input": "오늘 input",
-          "2026-04-20_top30_recap": "최신 validated recap",
-          "2026-04-20_next-session-prep": "내일 대응 준비",
-          "prediction-workspace": "Prediction Workspace",
-          "portfolio-pilot-review-dashboard": "예측 후보 대시보드",
-          "predictive-replay-and-review-system": "Predictive Replay",
-        }
-        if (labels[node.slugSegment]) node.displayName = labels[node.slugSegment]
+        const label = MARKET_INTEL_EXPLORER_LABELS[node.slugSegment]
+        if (label) node.displayName = label
       },
     }),
   ],
@@ -109,41 +85,16 @@ export const defaultListPageLayout: PageLayout = {
       ],
     }),
     Component.Explorer({
-      title: "섹션",
+      title: "workspace",
       folderDefaultState: "collapsed",
-      useSavedState: false,
+      useSavedState: true,
       filterFn: (node) => {
         if (node.isFolder) return true
-        const keep = new Set([
-          "market-intel/MARKET_INTEL_RECENT_CHANGES",
-          "market-intel/market-intel-progress-big-picture",
-          "market-intel/daily/2026-04-21_evening-briefing-input",
-          "market-intel/daily/2026-04-20_top30_recap",
-          "market-intel/daily/2026-04-20_next-session-prep",
-          "market-intel/research/prediction-workspace",
-          "market-intel/research/portfolio-pilot-review-dashboard",
-          "market-intel/workflows/predictive-replay-and-review-system",
-        ])
-        return keep.has(node.slug)
+        return MARKET_INTEL_EXPLORER_KEEP.has(node.slug)
       },
       mapFn: (node) => {
-        const labels = {
-          "market-intel": "Market Intel Home",
-          "daily": "Daily",
-          "research": "Prediction / Research",
-          "workflows": "Workflows",
-          "events": "Events",
-          "entities": "Stocks",
-          "MARKET_INTEL_RECENT_CHANGES": "최근 변경 로그",
-          "market-intel-progress-big-picture": "큰그림",
-          "2026-04-21_evening-briefing-input": "오늘 input",
-          "2026-04-20_top30_recap": "최신 validated recap",
-          "2026-04-20_next-session-prep": "내일 대응 준비",
-          "prediction-workspace": "Prediction Workspace",
-          "portfolio-pilot-review-dashboard": "예측 후보 대시보드",
-          "predictive-replay-and-review-system": "Predictive Replay",
-        }
-        if (labels[node.slugSegment]) node.displayName = labels[node.slugSegment]
+        const label = MARKET_INTEL_EXPLORER_LABELS[node.slugSegment]
+        if (label) node.displayName = label
       },
     }),
   ],

@@ -1,0 +1,29 @@
+export const MARKET_INTEL_EXPLORER_KEEP = new Set([
+  "market-intel/MARKET_INTEL_RECENT_CHANGES",
+  "market-intel/market-intel-progress-big-picture",
+  "market-intel/daily/index",
+  "market-intel/research/prediction-workspace",
+  "market-intel/research/portfolio-pilot-review-dashboard",
+  "market-intel/workflows/predictive-replay-and-review-system",
+  "market-intel/daily/2026-04-22_next-session-prep",
+  "market-intel/daily/2026-04-22_top30_recap",
+  "market-intel/daily/2026-04-22_evening-briefing-input",
+])
+
+export const MARKET_INTEL_EXPLORER_LABELS: Record<string, string> = {
+  "market-intel": "Market Intel Home",
+  "daily": "Daily",
+  "research": "Prediction / Research",
+  "workflows": "Workflows",
+  "events": "Events",
+  "entities": "Stocks",
+  "MARKET_INTEL_RECENT_CHANGES": "최근 변경 로그",
+  "market-intel-progress-big-picture": "큰그림",
+  "index": "Daily Workspace",
+  "prediction-workspace": "Prediction Workspace",
+  "portfolio-pilot-review-dashboard": "예측 후보 대시보드",
+  "predictive-replay-and-review-system": "Predictive Replay",
+  "2026-04-22_next-session-prep": "latest prep fallback",
+  "2026-04-22_top30_recap": "직전 장 validated recap",
+  "2026-04-22_evening-briefing-input": "직전 장 close input",
+}

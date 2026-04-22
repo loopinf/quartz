@@ -1,11 +1,11 @@
 ---
-title: Market Intel Start
-summary: 8081 루트 시작점. 오늘 세션 준비도와 최신 usable 문서를 가장 먼저 보여준다.
+title: daily workspace
+summary: 오늘 세션 준비도와 핵심 daily 문서 상태를 한 번에 확인하는 허브.
 ---
 
-# Market Intel Start
+# Daily Workspace
 
-## 지금 준비 상태 (<span data-mi-current-label="1" data-mi-current-date="2026-04-23" data-mi-current-phase="장전">2026-04-23 KST, 목요일 장전</span>)
+## 오늘 세션 readiness (<span data-mi-current-label="1" data-mi-current-date="2026-04-23" data-mi-current-phase="장전">2026-04-23 KST, 목요일 장전</span>)
 - 실시간 KST 기준: <span id="market-intel-now-label">2026-04-23 KST, 목요일 장전</span>
 <script id="market-intel-now-script">
 (() => {
@@ -26,9 +26,8 @@ summary: 8081 루트 시작점. 오늘 세션 준비도와 최신 usable 문서�
   el.textContent = `${take('year')}-${take('month')}-${take('day')} KST, ${take('weekday')} ${phase}`;
 })();
 </script>
-- 현재 세션: `2026-04-23` / `장전`
 - 준비도: `partial` = `2 / 3 ready`
-- 기준 문서 순서: `오늘 세션 prep → 직전 장 validated recap → 직전 장 close input`
+- 확인 순서: `오늘 세션 prep → 직전 장 validated recap → 직전 장 close input`
 
 - `MISSING` 오늘 세션 prep: target `2026-04-23_next-session-prep`
   - target은 2026-04-23_next-session-prep인데 아직 없다. 최신 fallback은 2026-04-22_next-session-prep이지만 오늘 세션용 문서는 아직 없다.
@@ -37,31 +36,39 @@ summary: 8081 루트 시작점. 오늘 세션 준비도와 최신 usable 문서�
   - 현재 세션 바로 직전 장 기준 validated recap은 2026-04-22_top30_recap이다.
 - `READY` 직전 장 close input: [2026-04-22_evening-briefing-input](/market-intel/daily/2026-04-22_evening-briefing-input)
   - 현재 세션 직전 장 close input은 2026-04-22_evening-briefing-input이다.
+- latest prep fallback: [2026-04-22_next-session-prep](/market-intel/daily/2026-04-22_next-session-prep)
 
-## 지금 바로 할 일
+## 오늘 바로 열 것
 1. [daily workspace에서 오늘 세션 prep 상태 확인](/market-intel/daily/)
 2. fallback으로 [2026-04-22_next-session-prep](/market-intel/daily/2026-04-22_next-session-prep) 참고
 3. [직전 장 validated recap 확인](/market-intel/daily/2026-04-22_top30_recap)
 4. [직전 장 close input 확인](/market-intel/daily/2026-04-22_evening-briefing-input)
 5. [prediction workspace](/market-intel/research/prediction-workspace)
 
-## 해석 기준
-- 이 페이지에서 `오늘`은 **현재 KST 운영 날짜**를 뜻한다.
-- prep은 **오늘 세션 기준 exact date match**가 있어야 `READY`다.
-- recap / close input은 **현재 세션 바로 직전 장 기준** 문서를 보여준다.
+## 최근 usable 기록
+### Session prep
+- [2026-04-22_next-session-prep](/market-intel/daily/2026-04-22_next-session-prep)
+- [2026-04-20_next-session-prep](/market-intel/daily/2026-04-20_next-session-prep)
+- [2026-04-17_next-session-prep](/market-intel/daily/2026-04-17_next-session-prep)
+
+### Validated recap
+- [2026-04-22_top30_recap](/market-intel/daily/2026-04-22_top30_recap)
+- [2026-04-21_top30_recap](/market-intel/daily/2026-04-21_top30_recap)
+- [2026-04-20_top30_recap](/market-intel/daily/2026-04-20_top30_recap)
+
+### Close input
+- [2026-04-22_evening-briefing-input](/market-intel/daily/2026-04-22_evening-briefing-input)
+- [2026-04-21_evening-briefing-input](/market-intel/daily/2026-04-21_evening-briefing-input)
+- [2026-04-20_evening-briefing-input](/market-intel/daily/2026-04-20_evening-briefing-input)
+
+### Supporting context
+- [2026-04-16_news_recap](/market-intel/daily/2026-04-16_news_recap)
+- [2026-04-16_high-signal-watchlist](/market-intel/daily/2026-04-16_high-signal-watchlist)
+- [2026-04-15_us-to-kr-bridge](/market-intel/daily/2026-04-15_us-to-kr-bridge)
+- [2026-04-16_us-to-kr-bridge-mythos-banks](/market-intel/daily/2026-04-16_us-to-kr-bridge-mythos-banks)
 
 ## 용어 정리
 - `오늘 세션 prep`: 오늘 장 대응용 next-session-prep 문서
 - `직전 장 validated recap`: 지금 세션 바로 이전 장의 검증 완료 TOP30 recap
 - `직전 장 close input`: 직전 장 마감 뒤 남긴 evening briefing input
 - `준비도`: 지금 시점에 필요한 핵심 3문서(prep / recap / close input)가 몇 개 준비됐는지
-
-## 섹션 바로가기
-- [Market Intel home](/market-intel/)
-- [daily workspace](/market-intel/daily/)
-- [prediction workspace](/market-intel/research/prediction-workspace)
-- [recent changes](/market-intel/MARKET_INTEL_RECENT_CHANGES)
-- [research folder](/market-intel/research/)
-- [workflow folder](/market-intel/workflows/)
-- [events folder](/market-intel/events/)
-- [entities folder](/market-intel/entities/)
