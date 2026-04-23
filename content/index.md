@@ -5,8 +5,8 @@ summary: 8081 루트 시작점. 현재 세션에 필요한 문서가 exact-date 
 
 # Market Intel Start
 
-## 지금 준비 상태 (<span data-mi-current-label="1" data-mi-current-date="2026-04-23" data-mi-current-phase="장전">2026-04-23 KST, 목요일 장전</span>)
-- 실시간 KST 기준: <span id="market-intel-now-label">2026-04-23 KST, 목요일 장전</span>
+## 지금 준비 상태 (<span data-mi-current-label="1" data-mi-current-date="2026-04-23" data-mi-current-phase="장중">2026-04-23 KST, 목요일 장중</span>)
+- 실시간 KST 기준: <span id="market-intel-now-label">2026-04-23 KST, 목요일 장중</span>
 <script id="market-intel-now-script">
 (() => {
   const el = document.getElementById('market-intel-now-label');
@@ -26,7 +26,7 @@ summary: 8081 루트 시작점. 현재 세션에 필요한 문서가 exact-date 
   el.textContent = `${take('year')}-${take('month')}-${take('day')} KST, ${take('weekday')} ${phase}`;
 })();
 </script>
-- 현재 세션: `2026-04-23` / `장전`
+- 현재 세션: `2026-04-23` / `장중`
 - 오늘 장전 준비 상태: `부분준비` = `2 / 3`
 - [진행상황판 바로 열기](/market-intel/current-readiness-board)
 - 자동 확인 기준: `오늘/다음 세션 prep`, `직전 장 validated recap`, `직전 장 close input`이 exact-date로 있는지 확인

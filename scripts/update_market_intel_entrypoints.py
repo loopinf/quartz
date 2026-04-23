@@ -499,26 +499,33 @@ def render_extra_status_lines(state: CurrentState) -> str:
         lines.append(f"- `READY` required close archive: `{state.required_archive_path}`")
         lines.append(f"  - 현재 세션에 필요한 close archive가 존재하고 validation 통과: {required_archive_detail}")
     elif state.required_archive_path.exists():
-        lines.append(f"- `WARNING` required close archive: `{state.required_archive_path}`")
+        lines.append(f"- `RECOVERY_NEEDED` required close archive: `{state.required_archive_path}`")
         lines.append(f"  - 파일은 있지만 validation 실패: {required_archive_detail}")
+        lines.append("  - next action: JMKR debug/parse-date --force 또는 validated ingest 재점검 필요")
     else:
-        lines.append(f"- `MISSING` required close archive: `{state.required_archive_path}`")
+        lines.append(f"- `RECOVERY_NEEDED` required close archive: `{state.required_archive_path}`")
         lines.append("  - 현재 세션에 필요한 close archive 파일 자체가 없다.")
+        lines.append("  - next action: JMKR same-day recovery flow 진입 필요")
 
     same_day_payload = parse_json_payload(state.same_day_archive_path) if state.same_day_archive_path.exists() else None
     same_day_valid, same_day_detail = archive_passes_validation(same_day_payload)
     if state.same_day_archive_path.exists() and same_day_valid:
         lines.append(f"- `READY` same-day source archive: `{state.same_day_archive_path}`")
         lines.append(f"  - today archive가 존재하고 validation 통과: {same_day_detail}")
+    elif state.same_day_archive_path.exists() and state.phase == "장후":
+        lines.append(f"- `RECOVERY_NEEDED` same-day source archive: `{state.same_day_archive_path}`")
+        lines.append(f"  - 장후 기준인데 today archive validation 실패: {same_day_detail}")
+        lines.append("  - next action: JMKR debug/parse-date --force 및 validated ingest 확인 필요")
     elif state.same_day_archive_path.exists():
         lines.append(f"- `WARNING` same-day source archive: `{state.same_day_archive_path}`")
         lines.append(f"  - today archive 파일은 있지만 validation 실패: {same_day_detail}")
     elif state.phase == "장후":
-        lines.append(f"- `MISSING` same-day source archive: `{state.same_day_archive_path}`")
+        lines.append(f"- `RECOVERY_NEEDED` same-day source archive: `{state.same_day_archive_path}`")
         lines.append("  - 장후 기준으로는 당일 archive가 있어야 하는데 아직 없다.")
+        lines.append("  - next action: JMKR same-day recovery flow 진입 필요")
     else:
         lines.append(f"- `WAITING` same-day source archive: `{state.same_day_archive_path}`")
-        lines.append("  - 장전/장중에는 당일 archive가 아직 없어도 정상일 수 있다. close 이후 READY/MISSING으로 봐야 한다.")
+        lines.append("  - 장전/장중에는 당일 archive가 아직 없어도 정상일 수 있다. close 이후 READY/RECOVERY_NEEDED로 봐야 한다.")
 
     parser_code, parser_summary = parser_health_snapshot(state.required_archive_path.parents[3], state)
     lines.append("- `" + parser_code + "` telegram parser health")

@@ -5,8 +5,8 @@ summary: 지금 세션 기준으로 필요한 핵심 daily 문서가 자동으�
 
 # Current Readiness Board
 
-## 지금 세션 자동 판정 (<span data-mi-current-label="1" data-mi-current-date="2026-04-23" data-mi-current-phase="장전">2026-04-23 KST, 목요일 장전</span>)
-- 실시간 KST 기준: <span id="market-intel-now-label">2026-04-23 KST, 목요일 장전</span>
+## 지금 세션 자동 판정 (<span data-mi-current-label="1" data-mi-current-date="2026-04-23" data-mi-current-phase="장중">2026-04-23 KST, 목요일 장중</span>)
+- 실시간 KST 기준: <span id="market-intel-now-label">2026-04-23 KST, 목요일 장중</span>
 <script id="market-intel-now-script">
 (() => {
   const el = document.getElementById('market-intel-now-label');
@@ -26,7 +26,7 @@ summary: 지금 세션 기준으로 필요한 핵심 daily 문서가 자동으�
   el.textContent = `${take('year')}-${take('month')}-${take('day')} KST, ${take('weekday')} ${phase}`;
 })();
 </script>
-- 현재 세션: `2026-04-23` / `장전`
+- 현재 세션: `2026-04-23` / `장중`
 - 상태판 기준: `오늘 장전 준비 상태`
 - 준비도: `부분준비` = `2 / 3`
 - 이 현황판은 sync/build 때 자동 생성된다.
@@ -46,7 +46,7 @@ summary: 지금 세션 기준으로 필요한 핵심 daily 문서가 자동으�
 - `READY` required close archive: `/Users/gbserver/repos/jmkr_kj/data/daily/archive/2026-04-22.json`
   - 현재 세션에 필요한 close archive가 존재하고 validation 통과: market_close + is_empty=false + TOP30 문구 + 번호 라인 29개
 - `WAITING` same-day source archive: `/Users/gbserver/repos/jmkr_kj/data/daily/archive/2026-04-23.json`
-  - 장전/장중에는 당일 archive가 아직 없어도 정상일 수 있다. close 이후 READY/MISSING으로 봐야 한다.
+  - 장전/장중에는 당일 archive가 아직 없어도 정상일 수 있다. close 이후 READY/RECOVERY_NEEDED로 봐야 한다.
 - `READY` telegram parser health
   - parser health=healthy, 직전 장 기준 last_update=2026-04-22 22:56 KST
 
