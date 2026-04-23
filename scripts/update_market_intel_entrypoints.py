@@ -191,6 +191,62 @@ def parser_health_snapshot(jmkr_root: Path, state: CurrentState | None = None) -
     return "WARNING", f"parser health=healthy, 하지만 직전 장 기준 last_update가 stale ({last_update_label})"
 
 
+def recovery_needed_items(state: CurrentState) -> list[str]:
+    items: list[str] = []
+    required_archive_payload = parse_json_payload(state.required_archive_path) if state.required_archive_path.exists() else None
+    required_archive_valid, _ = archive_passes_validation(required_archive_payload)
+    if not state.required_archive_path.exists() or not required_archive_valid:
+        items.append("required close archive")
+
+    same_day_payload = parse_json_payload(state.same_day_archive_path) if state.same_day_archive_path.exists() else None
+    same_day_valid, _ = archive_passes_validation(same_day_payload)
+    if state.phase == "장후" and (not state.same_day_archive_path.exists() or not same_day_valid):
+        items.append("same-day source archive")
+    return items
+
+
+def recovery_banner_lines(state: CurrentState) -> str:
+    items = recovery_needed_items(state)
+    if not items:
+        return "- recovery-needed 상태 아님"
+    joined = ", ".join(items)
+    return "\n".join(
+        [
+            f"- `RECOVERY_NEEDED`: {joined}",
+            "- [same-day source acquisition workflow](/market-intel/workflows/same-day-source-acquisition-workflow)",
+            "- next action: JMKR debug / parse-date --force / validated ingest 순서로 recovery 확인",
+        ]
+    )
+
+
+def update_recent_changes_status_block(recent_changes_path: Path, state: CurrentState) -> None:
+    start_marker = "<!-- AUTO_CURRENT_STATUS_START -->"
+    end_marker = "<!-- AUTO_CURRENT_STATUS_END -->"
+    current_text = recent_changes_path.read_text(encoding="utf-8") if recent_changes_path.exists() else "# Market Intel Recent Changes\n"
+    readiness_text, ready_count, total_count = readiness_summary(state)
+    items = recovery_needed_items(state)
+    recovery_text = ", ".join(items) if items else "없음"
+    block = "\n".join(
+        [
+            start_marker,
+            "## Auto current ops status",
+            f"- checked_at: {state.today_label}",
+            f"- readiness: {readiness_text} ({ready_count}/{total_count})",
+            f"- recovery_needed: {recovery_text}",
+            "- board: [[current-readiness-board|current-readiness-board]]",
+            "- workflow: [[market-intel/workflows/same-day-source-acquisition-workflow|same-day-source-acquisition-workflow]]",
+            end_marker,
+        ]
+    )
+    if start_marker in current_text and end_marker in current_text:
+        before, _, tail = current_text.partition(start_marker)
+        _, _, after = tail.partition(end_marker)
+        new_text = before.rstrip() + "\n\n" + block + after
+    else:
+        new_text = current_text.rstrip() + "\n\n" + block + "\n"
+    recent_changes_path.write_text(new_text.rstrip() + "\n", encoding="utf-8")
+
+
 def previous_trading_day(day: date) -> date:
     cursor = day - timedelta(days=1)
     while cursor.weekday() >= 5:
@@ -602,6 +658,9 @@ summary: 8081 루트 시작점. 현재 세션에 필요한 문서가 exact-date 
 ## 지금 바로 할 일
 {next_action_lines(state)}
 
+## recovery-needed 체크
+{recovery_banner_lines(state)}
+
 ## 최신 usable 문서
 {render_latest_lines(state)}
 
@@ -639,6 +698,9 @@ summary: 현재 세션 필수 문서가 자동으로 준비됐는지 먼저 확�
 
 ## 오늘 바로 할 일
 {next_action_lines(state)}
+
+## recovery-needed 체크
+{recovery_banner_lines(state)}
 
 ## 최신 usable 문서
 {render_latest_lines(state)}
@@ -682,6 +744,9 @@ summary: 현재 세션 필수 daily 문서가 exact-date 기준으로 준비됐�
 - 자동 확인 순서: `prep → validated recap → close input`
 
 {render_status_lines(state)}
+
+## recovery-needed 체크
+{recovery_banner_lines(state)}
 
 ## 오늘 바로 열 것
 {next_action_lines(state)}
@@ -764,7 +829,7 @@ summary: 지금 세션 기준으로 필요한 핵심 daily 문서가 자동으�
   - `직전 장 validated recap` = exact-date + `validation_status: validated`
   - `직전 장 close input` = exact-date match
   - `final evening briefing output` = exact-date match
-  - `same-day source archive` = phase-aware check (`장전/장중`에는 WAITING 가능, `장후`에는 READY/MISSING)
+  - `same-day source archive` = phase-aware check (`장전/장중`에는 WAITING 가능, `장후`에는 READY/RECOVERY_NEEDED)
 - 현재 반영 위치: `/`, `/market-intel/`, `/market-intel/daily/`, `/market-intel/research/prediction-workspace`, `/market-intel/current-readiness-board`
 - 한계: 이 확인은 **sync/build 시점 자동화**다. 즉 문서 존재 여부를 자동 판정해 표시하지만, 별도 cron 없이 매분 실시간 재판정하는 구조는 아니다.
 
@@ -787,6 +852,9 @@ summary: 지금 세션 기준으로 필요한 핵심 daily 문서가 자동으�
 
 ## 다음 액션
 {next_action_lines(state)}
+
+## recovery-needed 체크
+{recovery_banner_lines(state)}
 
 ## 관련 페이지
 - [Market Intel Home](/market-intel/)
@@ -883,12 +951,14 @@ def main() -> int:
 
     state = build_state(vault_market_intel, jmkr_root)
     daily_dir = vault_market_intel / "daily"
+    recent_changes_path = vault_market_intel / "MARKET_INTEL_RECENT_CHANGES.md"
 
     write(site_root / "content/index.md", root_markdown(state))
     write(vault_market_intel / "index.md", market_home_markdown(state))
     write(vault_market_intel / "daily/index.md", daily_index_markdown(state, daily_dir))
     write(vault_market_intel / "research/prediction-workspace.md", prediction_workspace_markdown(state))
     write(vault_market_intel / "current-readiness-board.md", current_session_status_markdown(state))
+    update_recent_changes_status_block(recent_changes_path, state)
     write(site_root / "market-intel-current.ts", current_ts(state))
 
     readiness_text, ready_count, total_count = readiness_summary(state)

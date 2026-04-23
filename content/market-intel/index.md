@@ -27,13 +27,12 @@ summary: 현재 세션 필수 문서가 자동으로 준비됐는지 먼저 확�
 })();
 </script>
 - 현재 세션: `2026-04-23` / `장중`
-- 오늘 장전 준비 상태: `부분준비` = `2 / 3`
+- 오늘 장전 준비 상태: `완료` = `3 / 3`
 - [진행상황판](/market-intel/current-readiness-board)
 - 최근 변경 로그: [MARKET_INTEL_RECENT_CHANGES](/market-intel/MARKET_INTEL_RECENT_CHANGES)
 
-- `MISSING` 오늘 세션 prep: 필요 문서 `2026-04-23_next-session-prep`
-  - 필요 문서는 2026-04-23_next-session-prep인데 아직 없다.
-  - 최신 fallback: [2026-04-22_next-session-prep](/market-intel/daily/2026-04-22_next-session-prep)
+- `READY` 오늘 세션 prep: [2026-04-23_next-session-prep](/market-intel/daily/2026-04-23_next-session-prep)
+  - 오늘 세션용 prep가 2026-04-23_next-session-prep로 준비되어 있다.
 - `READY` 직전 장 validated recap: [2026-04-22_top30_recap](/market-intel/daily/2026-04-22_top30_recap)
   - 직전 장 기준 validated recap가 2026-04-22_top30_recap로 준비되어 있다.
 - `READY` 직전 장 close input: [2026-04-22_evening-briefing-input](/market-intel/daily/2026-04-22_evening-briefing-input)
@@ -41,16 +40,19 @@ summary: 현재 세션 필수 문서가 자동으로 준비됐는지 먼저 확�
 
 ## 오늘 바로 할 일
 1. [진행상황판에서 exact-date readiness 확인](/market-intel/current-readiness-board)
-2. [fallback prep 확인](/market-intel/daily/2026-04-22_next-session-prep)
+2. [오늘 세션 prep 열기](/market-intel/daily/2026-04-23_next-session-prep)
 3. [직전 장 validated recap](/market-intel/daily/2026-04-22_top30_recap)
 4. [직전 장 close input](/market-intel/daily/2026-04-22_evening-briefing-input)
 5. [prediction workspace](/market-intel/research/prediction-workspace)
 
+## recovery-needed 체크
+- recovery-needed 상태 아님
+
 ## 최신 usable 문서
-- 최신 prep: [2026-04-22_next-session-prep](/market-intel/daily/2026-04-22_next-session-prep)
+- 최신 prep: [2026-04-23_next-session-prep](/market-intel/daily/2026-04-23_next-session-prep)
 - 최신 validated recap: [2026-04-22_top30_recap](/market-intel/daily/2026-04-22_top30_recap)
 - 최신 close input: [2026-04-22_evening-briefing-input](/market-intel/daily/2026-04-22_evening-briefing-input)
-- 최신 evening briefing output: [2026-04-16_evening-briefing](/market-intel/daily/2026-04-16_evening-briefing)
+- 최신 evening briefing output: [2026-04-22_evening-briefing](/market-intel/daily/2026-04-22_evening-briefing)
 - same-day archive path: `/Users/gbserver/repos/jmkr_kj/data/daily/archive/2026-04-23.json` (missing yet)
 
 ## 왜 이렇게 보나
