@@ -23,6 +23,13 @@ class ThemeCluster:
 
 
 @dataclass(frozen=True)
+class RecentRecap:
+    day: date
+    path: Path
+    themes: list[str]
+
+
+@dataclass(frozen=True)
 class PrepContext:
     target_date: date
     base_date: date
@@ -33,6 +40,7 @@ class PrepContext:
     event_slugs: list[str]
     theme_clusters: list[ThemeCluster]
     ungrouped_names: list[str]
+    recent_recaps: list[RecentRecap]
 
 
 def parse_args() -> argparse.Namespace:
@@ -158,6 +166,39 @@ def parse_event_slugs(recap_text: str, base_date: date) -> list[str]:
     return seen
 
 
+def collect_recent_validated_recaps(daily_dir: Path, anchor_date: date, limit: int = 5) -> list[RecentRecap]:
+    rows: list[RecentRecap] = []
+    cursor = anchor_date
+    while len(rows) < limit:
+        candidate = daily_dir / f"{cursor:%Y-%m-%d}_top30_recap.md"
+        if candidate.exists():
+            recap_text = candidate.read_text(encoding="utf-8")
+            recap_frontmatter = parse_frontmatter(recap_text)
+            if recap_frontmatter.get("validation_status") == "validated":
+                clusters, _ = parse_theme_clusters(recap_text)
+                rows.append(RecentRecap(day=cursor, path=candidate, themes=[cluster.name for cluster in clusters[:5]]))
+        prev = previous_trading_day(cursor)
+        if prev == cursor:
+            break
+        cursor = prev
+        if anchor_date - cursor > timedelta(days=14):
+            break
+    return rows
+
+
+def summarize_recent_theme_recurrence(recent_recaps: list[RecentRecap]) -> list[str]:
+    counts: dict[str, int] = {}
+    for row in recent_recaps:
+        for theme in row.themes:
+            counts[theme] = counts.get(theme, 0) + 1
+    ordered = sorted(counts.items(), key=lambda item: (-item[1], item[0]))
+    return [f"- `{theme}`: 최근 {len(recent_recaps)}거래일 중 {cnt}회 등장" for theme, cnt in ordered[:4]]
+
+
+def recent_recap_reference_lines(recent_recaps: list[RecentRecap]) -> list[str]:
+    return [f"- [[{row.path.stem}]] — {', '.join(row.themes[:4]) if row.themes else 'theme parse unavailable'}" for row in recent_recaps]
+
+
 def join_themes_for_sentence(clusters: list[ThemeCluster], limit: int = 3) -> str:
     names = [cluster.name for cluster in clusters[:limit]]
     if not names:
@@ -220,6 +261,7 @@ def build_context(vault_market_intel: Path, target_date: date) -> PrepContext:
         event_slugs=event_slugs,
         theme_clusters=theme_clusters,
         ungrouped_names=ungrouped_names,
+        recent_recaps=collect_recent_validated_recaps(daily_dir, base_date, limit=5),
     )
 
 
@@ -227,6 +269,7 @@ def build_supporting_notes(context: PrepContext) -> list[str]:
     notes = [context.close_input_path.stem]
     if context.briefing_path:
         notes.append(context.briefing_path.stem)
+    notes.extend(row.path.stem for row in context.recent_recaps[:4])
     notes.extend(context.event_slugs[:5])
     deduped: list[str] = []
     for note in notes:
@@ -273,22 +316,22 @@ def build_content(context: PrepContext) -> str:
         "## Why this note exists",
         f"- 이 문서는 **{context.target_date:%Y-%m-%d} {weekday_label(context.target_date)} 장전 대응 문서**다.",
         f"- 기준 close는 `{context.base_date:%Y-%m-%d}`이고, 따라서 이 노트 안에서 `오늘`은 **{context.target_date:%Y-%m-%d} KST pre-open**을 뜻한다.",
-        "- 이 문서는 `validated recap + close input + prior event notes`만으로 자동 생성한 **prior-close-only scaffold**이며, same-day intraday/close 정보는 포함하지 않는다.",
+        "- 이 문서는 `validated recap + close input + 저장된 최근 며칠 graph`를 종합한 prior-close-only scaffold이며, same-day intraday/close 정보는 포함하지 않는다.",
         f"- 장마감 정리는 {note_link(context.recap_path.stem)}에, 장전 실행 포인트는 이 문서에 분리한다.",
         "",
-        "## Base context",
-        f"- Validated recap: {note_link(context.recap_path.stem)}",
-        f"- Close input: {note_link(context.close_input_path.stem)}",
+        "## Recent 5 trading days synthesized context",
     ]
-    if context.briefing_path:
-        lines.append(f"- Evening briefing: {note_link(context.briefing_path.stem)}")
-    if context.event_slugs:
-        lines.append("- Event notes:")
-        for slug in context.event_slugs[:5]:
-            lines.append(f"  - {event_link(slug)}")
+    if context.recent_recaps:
+        lines.extend(recent_recap_reference_lines(context.recent_recaps))
+        lines.append("")
+        lines.append("반복 등장 테마:")
+        lines.extend(summarize_recent_theme_recurrence(context.recent_recaps))
+    else:
+        lines.append("- 최근 5거래일 validated recap reference unavailable")
+
     lines.extend([
         "",
-        "핵심 base read:",
+        "## Base context available before the open",
         f"- {context.base_date:%m/%d} validated TOP30는 **{join_themes_for_sentence(top_clusters)}** 축이 먼저 보이는 날이었다.",
     ])
     if top_clusters:
@@ -299,6 +342,7 @@ def build_content(context: PrepContext) -> str:
         lines.append(f"- 동시에 `{second.name}`가 보조/공동 주도축으로 붙는지 확인해야 하며, 대표 종목은 {', '.join(limited_members(second, 3))}다.")
     if context.ungrouped_names:
         lines.append(f"- 개별주/혼합 반응은 {', '.join(context.ungrouped_names[:5])} 쪽이므로, 군집보다 개별 수급으로 흩어지는지 같이 본다.")
+    lines.append("- 전날 하루만 보는 게 아니라, 최근 5거래일 정리 데이터에서 `집중 -> 분산 -> 재선별` 흐름이 어떻게 이어졌는지 위 기준선 위에서 판단한다.")
 
     lines.extend(["", "## Carry-over themes"])
     if primary:
@@ -332,7 +376,7 @@ def build_content(context: PrepContext) -> str:
         f"2. **{second_theme}가 {first_theme}와 함께 공동 주도축인지, 아니면 일부 종목 강세에 그치는지 확인**",
         f"3. **{third_theme}가 후속 확산을 만드는지, 아니면 headline 반응 후 약해지는지 확인**",
         "4. **전일 상위 급등주가 gap-only인지, 시초 이후 거래대금까지 유지하는지 확인**",
-        "5. **시장 breadth가 따라붙는지, 아니면 군집 없이 개별주 순환매로 쪼개지는지 확인**",
+        "5. **시장이 breadth가 붙는 다축 확산인지, 아니면 소수 leader 집중 구조인지 구분**",
         "",
         "## Priority names / sectors",
         "### A. leader 확인",
@@ -354,10 +398,10 @@ def build_content(context: PrepContext) -> str:
         f"- {first_theme} 상위주가 갭만 만들고 바로 밀리면 continuation 해석을 빠르게 낮춘다.",
         f"- {second_theme}가 breadth 없이 일부 종목만 강하면 공동 주도축 해석을 약화한다.",
         f"- {third_theme} 포함 후속 테마가 거래대금을 못 붙이면 확산 시나리오를 하향한다.",
-        "- 지수/시장 breadth가 약하고 개별주만 튀면 전일 군집 해석보다 단기 순환매/소화 구간 가능성을 높인다.",
+        "- 최근 5거래일 흐름상 분산 재편이었는데 장초부터 소수 종목만 남으면 단기 순환매/소화 구간 가능성을 높인다.",
         "",
         "## One-line prep",
-        f"**{context.target_date:%Y-%m-%d} 장전의 기본 시나리오는 {first_theme} 중심 continuation 여부를 먼저 확인하는 것이고, 장초부터 거래대금이 약하거나 {second_theme}/{third_theme} 쪽으로 분산되면 주도축 해석을 빠르게 조정해야 한다.**",
+        f"**{context.target_date:%Y-%m-%d} 장전의 기본 시나리오는 {first_theme} 중심 continuation 여부를 먼저 확인하되, 최근 5거래일의 집중→분산→재선별 흐름 위에서 {second_theme}/{third_theme}가 새 리더로 굳는지도 함께 판단하는 것이다.**",
         "",
         "## Guardrail",
         "- 이 문서는 prior-close-only scaffold다.",

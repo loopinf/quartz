@@ -1,8 +1,8 @@
 ---
 id: evening-briefing-2026-04-23
 note_type: daily_evening_briefing
-created_at: 2026-04-24 10:41:26 KST
-updated_at: 2026-04-24 10:41:26 KST
+created_at: 2026-04-24 11:54:59 KST
+updated_at: 2026-04-24 11:54:59 KST
 review_date: 2026-04-23
 source_note: 2026-04-23_evening-briefing-input
 reviewer: 헤르메스(ㅎㅁ)
@@ -12,8 +12,21 @@ confidence_mode: validated
 
 # 2026-04-23 Evening Briefing
 
+## Recent 5-trading-day organized context
+- [[2026-04-23_top30_recap]] — 제약바이오, 반도체소부장, 원전, 전력기기
+- [[2026-04-22_top30_recap]] — 로봇, 반도체소부장, 조선기자재, 데이터센터
+- [[2026-04-21_top30_recap]] — 이차전지, 로봇
+- [[2026-04-20_top30_recap]] — 양자/양자암호, 보안, 이차전지, 게임
+- [[2026-04-17_top30_recap]] — 코로나, 광통신장비, 데이터센터, 디지털화폐
+
+반복 등장 테마:
+- `반도체소부장`: 최근 5거래일 중 3회 등장
+- `데이터센터`: 최근 5거래일 중 2회 등장
+- `로봇`: 최근 5거래일 중 2회 등장
+- `이차전지`: 최근 5거래일 중 2회 등장
+
 ## One-line market read
-**04/23는 제약바이오 군집이 가장 선명하게 확인된 가운데 반도체소부장·원전·전력기기 축이 함께 붙은 선택적 순환매 장세였고, 내일은 breadth가 실제로 이어지는 주도축이 무엇인지 가려내는 것이 핵심이다.**
+**04/23는 제약바이오 군집이 가장 선명하게 확인된 가운데 반도체소부장·원전·전력기기 축이 함께 붙은 선택적 순환매 장세였고, 최근 5거래일 흐름상 내일은 breadth가 실제로 이어지는 주도축이 무엇인지 가려내는 것이 핵심이다.**
 
 ## What mattered today
 - **제약바이오** 군집이 핵심 축으로 확인됐다.
@@ -34,6 +47,10 @@ confidence_mode: validated
 - **continuity**
   - validated recap 기준 제약바이오가 당일 최상위 군집으로 확인돼, 다음 세션도 이 축을 기준선으로 봐야 한다.
   - 반도체소부장도 보조 주도축으로 붙어 단일 테마 one-shot보다는 다축 선택적 순환매 가능성을 남겼다.
+  - 최근 5거래일 정리 데이터 기준 반복 등장 테마는 아래와 같다.
+  - `반도체소부장`: 최근 5거래일 중 3회 등장
+  - `데이터센터`: 최근 5거래일 중 2회 등장
+  - `로봇`: 최근 5거래일 중 2회 등장
 - **change**
   - 다만 JMKR local outputs만 보면 **전선/전력기기, 원전/발전설비, 반도체소부장, 일부 로봇·ESS/AI보안** 쪽으로 수급이 모였고, breadth는 약했다.
   - 따라서 현재 해석은 `4/21 배터리 과집중 -> 4/22 분산형 재편` 이후, 오늘은 **breadth 약화 속 전력·설비·반도체 개별/소군집 순환매** 가능성이 높지만, 이 판단은 archive 복구 전 provisional이다.
@@ -43,19 +60,19 @@ confidence_mode: validated
 2. **반도체소부장 축이 보조 반응이 아니라 공동 주도축으로 거래대금을 동반하는지 확인**
 3. **원전 축이 실제 확산을 만드는지, 아니면 headline one-shot인지 확인**
 4. **상위 급등주가 gap-only인지, 시초 이후 follow-through를 유지하는지 확인**
-5. **시장이 breadth 없이 소수 leader 집중으로 가는지, 군집 확산으로 가는지 구분**
+5. **최근 5거래일 흐름 위에서 시장이 breadth 확산인지, 소수 leader 집중인지 구분**
 
 ## Risk / invalidation notes
 - 제약바이오가 장초 갭만 만들고 breadth 없이 빠르게 압축되면 continuation 해석을 낮춰야 한다.
 - 보조 군집이 개별 뉴스 반응에 그치면 다축 순환매 해석은 과대평가일 수 있다.
-- 지수/시장 breadth가 약하면 군집 해석보다 소수 leader 집중 장세로 빠르게 바뀔 수 있다.
+- 최근 5거래일 정리 데이터와 달리 소수 종목만 남으면 단기 순환매/소화 구간일 수 있다.
 
 ## Linked references
 - [[2026-04-23_evening-briefing-input]]
 - [[2026-04-23_top30_recap]]
-- [[2026-04-20_top30_recap]]
-- [[2026-04-21_top30_recap]]
 - [[2026-04-22_top30_recap]]
+- [[2026-04-21_top30_recap]]
+- [[2026-04-20_top30_recap]]
 - [[market-intel/events/2026-04-23_제약바이오_모멘텀|2026-04-23_제약바이오_모멘텀]]
 - [[market-intel/events/2026-04-23_반도체소부장_모멘텀|2026-04-23_반도체소부장_모멘텀]]
 - [[market-intel/events/2026-04-23_원전_모멘텀|2026-04-23_원전_모멘텀]]
@@ -63,5 +80,5 @@ confidence_mode: validated
 - [[market-intel/events/2026-04-23_코로나_모멘텀|2026-04-23_코로나_모멘텀]]
 
 ## Note
-- 이 브리핑은 2026-04-23 close 기준 validated recap + input을 바탕으로 자동 생성됐다.
+- 이 브리핑은 2026-04-23 close 기준 validated recap + input + 최근 5거래일 정리 데이터를 바탕으로 자동 생성됐다.
 - 다음 세션 장전 계획은 별도 [[2026-04-24_next-session-prep]] 에서 본다.

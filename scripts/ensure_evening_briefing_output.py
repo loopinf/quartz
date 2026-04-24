@@ -23,6 +23,13 @@ class ThemeCluster:
 
 
 @dataclass(frozen=True)
+class RecentRecap:
+    day: date
+    path: Path
+    themes: list[str]
+
+
+@dataclass(frozen=True)
 class BriefingContext:
     target_date: date
     input_path: Path
@@ -37,6 +44,7 @@ class BriefingContext:
     local_tape_lines: list[str]
     continuity_lines: list[str]
     market_snapshot_lines: list[str]
+    recent_recaps: list[RecentRecap]
 
 
 def parse_args() -> argparse.Namespace:
@@ -171,6 +179,48 @@ def extract_continuity_lines(input_text: str) -> list[str]:
     return lines[-4:]
 
 
+def collect_recent_validated_recaps(daily_dir: Path, anchor_date: date, limit: int = 5) -> list[RecentRecap]:
+    rows: list[RecentRecap] = []
+    cursor = anchor_date
+    while len(rows) < limit:
+        candidate = daily_dir / f"{cursor:%Y-%m-%d}_top30_recap.md"
+        if candidate.exists():
+            recap_text = candidate.read_text(encoding="utf-8")
+            recap_frontmatter = parse_frontmatter(recap_text)
+            if recap_frontmatter.get("validation_status") == "validated":
+                clusters, _ = parse_theme_clusters(recap_text)
+                rows.append(RecentRecap(day=cursor, path=candidate, themes=[cluster.name for cluster in clusters[:5]]))
+        prev = previous_trading_day(cursor)
+        if prev == cursor:
+            break
+        cursor = prev
+        if anchor_date - cursor > timedelta(days=14):
+            break
+    return rows
+
+
+def summarize_recent_theme_recurrence(recent_recaps: list[RecentRecap]) -> list[str]:
+    counts: dict[str, int] = {}
+    for row in recent_recaps:
+        for theme in row.themes:
+            counts[theme] = counts.get(theme, 0) + 1
+    ordered = sorted(counts.items(), key=lambda item: (-item[1], item[0]))
+    return [f"- `{theme}`: 최근 {len(recent_recaps)}거래일 중 {cnt}회 등장" for theme, cnt in ordered[:4]]
+
+
+def recent_recap_reference_lines(recent_recaps: list[RecentRecap]) -> list[str]:
+    return [f"- [[{row.path.stem}]] — {', '.join(row.themes[:4]) if row.themes else 'theme parse unavailable'}" for row in recent_recaps]
+
+
+def summarize_theme_names(clusters: list[ThemeCluster], limit: int = 3) -> str:
+    names = [cluster.name for cluster in clusters[:limit]]
+    if not names:
+        return "뚜렷한 군집"
+    if len(names) == 1:
+        return names[0]
+    return "·".join(names)
+
+
 def build_context(vault_market_intel: Path, target_date: date) -> BriefingContext:
     daily_dir = vault_market_intel / "daily"
     input_path = daily_dir / f"{target_date:%Y-%m-%d}_evening-briefing-input.md"
@@ -215,6 +265,7 @@ def build_context(vault_market_intel: Path, target_date: date) -> BriefingContex
         local_tape_lines=extract_local_tape_lines(input_text),
         continuity_lines=extract_continuity_lines(input_text),
         market_snapshot_lines=market_snapshot_lines,
+        recent_recaps=collect_recent_validated_recaps(daily_dir, target_date, limit=5),
     )
 
 
@@ -226,23 +277,12 @@ def event_link(slug: str) -> str:
     return f"[[market-intel/events/{slug}|{slug}]]"
 
 
-def summarize_theme_names(clusters: list[ThemeCluster], limit: int = 3) -> str:
-    names = [cluster.name for cluster in clusters[:limit]]
-    if not names:
-        return "뚜렷한 군집"
-    if len(names) == 1:
-        return names[0]
-    return "·".join(names)
-
-
 def make_oneliner(context: BriefingContext) -> str:
     if context.recap_validated and context.recap_clusters:
         lead = context.recap_clusters[0]
         others = summarize_theme_names(context.recap_clusters[1:4], limit=3)
-        if others and others != "뚜렷한 군집":
-            return f"**{context.target_date:%m/%d}는 {lead.name} 군집이 가장 선명하게 확인된 가운데 {others} 축이 함께 붙은 선택적 순환매 장세였고, 내일은 breadth가 실제로 이어지는 주도축이 무엇인지 가려내는 것이 핵심이다.**"
-        return f"**{context.target_date:%m/%d}는 {lead.name} 중심 군집이 가장 두드러진 날이었고, 내일은 이 축이 breadth를 유지한 continuation인지 확인하는 것이 핵심이다.**"
-    return f"**{context.target_date:%m/%d}는 validated same-day recap 없이 제한된 입력으로만 정리한 partial mode 브리핑이며, 내일은 전력·설비·반도체 등 관측된 순환매 축이 실제로 이어지는지부터 보수적으로 확인해야 한다.**"
+        return f"**{context.target_date:%m/%d}는 {lead.name} 군집이 가장 선명하게 확인된 가운데 {others} 축이 함께 붙은 선택적 순환매 장세였고, 최근 5거래일 흐름상 내일은 breadth가 실제로 이어지는 주도축이 무엇인지 가려내는 것이 핵심이다.**"
+    return f"**{context.target_date:%m/%d}는 validated same-day recap 없이 제한된 입력으로만 정리한 partial mode 브리핑이지만, 최근 5거래일 정리 데이터를 바탕으로 내일은 전력·설비·반도체 등 관측된 순환매 축이 실제로 이어지는지 보수적으로 확인해야 한다.**"
 
 
 def build_what_mattered(context: BriefingContext) -> list[str]:
@@ -272,6 +312,10 @@ def build_continuity_change(context: BriefingContext) -> list[str]:
             lines.append(f"  - {second.name}도 보조 주도축으로 붙어 단일 테마 one-shot보다는 다축 선택적 순환매 가능성을 남겼다.")
     else:
         lines.append("  - same-day validated recap 부재로 continuity 판단 자체가 제한적이다.")
+    if context.recent_recaps:
+        lines.append("  - 최근 5거래일 정리 데이터 기준 반복 등장 테마는 아래와 같다.")
+        for line in summarize_recent_theme_recurrence(context.recent_recaps)[:3]:
+            lines.append(f"  {line}")
     lines.append("- **change**")
     if context.continuity_lines:
         for line in context.continuity_lines[-2:]:
@@ -288,14 +332,13 @@ def build_tomorrow_checklist(context: BriefingContext) -> list[str]:
         top = context.recap_clusters[0]
         second = context.recap_clusters[1] if len(context.recap_clusters) > 1 else None
         third = context.recap_clusters[2] if len(context.recap_clusters) > 2 else None
-        lines = [
+        return [
             f"1. **{top.name} 축이 상위 1종목 반응이 아니라 섹터 breadth로 유지되는지 확인**",
             f"2. **{second.name if second else top.name} 축이 보조 반응이 아니라 공동 주도축으로 거래대금을 동반하는지 확인**",
             f"3. **{third.name if third else '후속 군집'} 축이 실제 확산을 만드는지, 아니면 headline one-shot인지 확인**",
             "4. **상위 급등주가 gap-only인지, 시초 이후 follow-through를 유지하는지 확인**",
-            "5. **시장이 breadth 없이 소수 leader 집중으로 가는지, 군집 확산으로 가는지 구분**",
+            "5. **최근 5거래일 흐름 위에서 시장이 breadth 확산인지, 소수 leader 집중인지 구분**",
         ]
-        return lines
     return [
         "1. **partial mode임을 전제로 전력·설비·반도체 관측축이 장초에도 이어지는지 확인**",
         "2. **소수 leader만 살아남는지, breadth가 실제로 붙는지 확인**",
@@ -309,7 +352,7 @@ def build_risk_notes(context: BriefingContext) -> list[str]:
         return [
             f"- {top}가 장초 갭만 만들고 breadth 없이 빠르게 압축되면 continuation 해석을 낮춰야 한다.",
             "- 보조 군집이 개별 뉴스 반응에 그치면 다축 순환매 해석은 과대평가일 수 있다.",
-            "- 지수/시장 breadth가 약하면 군집 해석보다 소수 leader 집중 장세로 빠르게 바뀔 수 있다.",
+            "- 최근 5거래일 정리 데이터와 달리 소수 종목만 남으면 단기 순환매/소화 구간일 수 있다.",
         ]
     return [
         "- `partial mode`: validated same-day recap이 없으므로 확정형 브리핑처럼 쓰면 안 된다.",
@@ -321,8 +364,8 @@ def build_linked_references(context: BriefingContext) -> list[str]:
     lines = [f"- {note_link(context.input_path.stem)}"]
     if context.recap_path:
         lines.append(f"- {note_link(context.recap_path.stem)}")
-    for slug in context.source_notes[:3]:
-        lines.append(f"- {note_link(slug)}")
+    for row in context.recent_recaps[:4]:
+        lines.append(f"- {note_link(row.path.stem)}")
     for slug in context.event_slugs[:5]:
         lines.append(f"- {event_link(slug)}")
     deduped: list[str] = []
@@ -354,6 +397,18 @@ def build_content(context: BriefingContext) -> str:
         "",
         f"# {context.target_date:%Y-%m-%d} Evening Briefing",
         "",
+        "## Recent 5-trading-day organized context",
+    ]
+    if context.recent_recaps:
+        lines.extend(recent_recap_reference_lines(context.recent_recaps))
+        lines.append("")
+        lines.append("반복 등장 테마:")
+        lines.extend(summarize_recent_theme_recurrence(context.recent_recaps))
+    else:
+        lines.append("- 최근 5거래일 validated recap reference unavailable")
+
+    lines.extend([
+        "",
         "## One-line market read",
         make_oneliner(context),
         "",
@@ -373,9 +428,9 @@ def build_content(context: BriefingContext) -> str:
         *build_linked_references(context),
         "",
         "## Note",
-    ]
+    ])
     if context.recap_validated:
-        lines.append(f"- 이 브리핑은 {context.target_date:%Y-%m-%d} close 기준 validated recap + input을 바탕으로 자동 생성됐다.")
+        lines.append(f"- 이 브리핑은 {context.target_date:%Y-%m-%d} close 기준 validated recap + input + 최근 5거래일 정리 데이터를 바탕으로 자동 생성됐다.")
         next_day = context.target_date + timedelta(days=1)
         while next_day.weekday() >= 5:
             next_day += timedelta(days=1)
