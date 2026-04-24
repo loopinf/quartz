@@ -5,6 +5,7 @@ import argparse
 import ast
 import json
 import re
+import subprocess
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from pathlib import Path
@@ -15,6 +16,7 @@ WEEKDAY_KO = ["월", "화", "수", "목", "금", "토", "일"]
 DOMINANT_THEME_RE = re.compile(r"^-\s+([^:]+):\s+(\d+)개\s+\((.*)\)\s*$")
 LINK_RE = re.compile(r"\[\[(?:[^\]|]+/)?([^\]|]+)(?:\|[^\]]+)?\]\]")
 HIGH_SIGNAL_DIR = Path("/Users/gbserver/repos/jmkr_kj/data/signals/high-signals")
+HIGH_SIGNAL_SCRIPT = Path("/Users/gbserver/repos/jmkr_kj/scripts/export_high_signal_snapshot.py")
 
 
 @dataclass(frozen=True)
@@ -22,6 +24,16 @@ class ThemeCluster:
     name: str
     count: int
     members: list[str]
+
+
+@dataclass(frozen=True)
+class HighSignalOverlap:
+    breakout_overlap: list[str]
+    near_high_overlap: list[str]
+    technical_support_names: list[str]
+    generated_days: list[str]
+    missing_days: list[str]
+    empty_days: list[str]
 
 
 @dataclass(frozen=True)
@@ -216,6 +228,88 @@ def has_same_window_high_signal(recent_recaps: list[RecentRecap]) -> bool:
     return False
 
 
+def ensure_high_signal_snapshot(day: date) -> tuple[Path | None, str | None]:
+    path = HIGH_SIGNAL_DIR / f"{day:%Y-%m-%d}.json"
+    if path.exists():
+        return path, None
+    if not HIGH_SIGNAL_SCRIPT.exists():
+        return None, f"script_missing:{day:%Y-%m-%d}"
+    try:
+        subprocess.run(
+            ["python3", str(HIGH_SIGNAL_SCRIPT), "--date", f"{day:%Y-%m-%d}", "--top", "5000"],
+            cwd=str(HIGH_SIGNAL_SCRIPT.parent.parent),
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    except subprocess.CalledProcessError as exc:
+        return None, f"generate_failed:{day:%Y-%m-%d}:{exc.returncode}"
+    return (path, None) if path.exists() else (None, f"missing_after_generate:{day:%Y-%m-%d}")
+
+
+def _dedupe_keep_order(items: list[str]) -> list[str]:
+    seen: set[str] = set()
+    out: list[str] = []
+    for item in items:
+        if item in seen:
+            continue
+        seen.add(item)
+        out.append(item)
+    return out
+
+
+def collect_high_signal_overlap(recent_recaps: list[RecentRecap], carry_names: set[str]) -> HighSignalOverlap:
+    breakout_overlap: list[str] = []
+    near_high_overlap: list[str] = []
+    technical_support: list[str] = []
+    generated_days: list[str] = []
+    missing_days: list[str] = []
+    empty_days: list[str] = []
+
+    for row in recent_recaps:
+        snapshot_path, error = ensure_high_signal_snapshot(row.day)
+        if error or snapshot_path is None:
+            missing_days.append(f"{row.day:%Y-%m-%d}")
+            continue
+        generated_days.append(f"{row.day:%Y-%m-%d}")
+        try:
+            payload = json.loads(snapshot_path.read_text(encoding="utf-8"))
+        except Exception:
+            missing_days.append(f"{row.day:%Y-%m-%d}")
+            continue
+
+        states = payload.get("states", {}) or {}
+        events = payload.get("events", {}) or {}
+        state_rows = [item for rows in states.values() for item in rows]
+        event_rows = [item for rows in events.values() for item in rows]
+        if not state_rows and not event_rows:
+            empty_days.append(f"{row.day:%Y-%m-%d}")
+            continue
+
+        for signal_type, rows in events.items():
+            for item in rows:
+                name = item.get("stock_name")
+                if name in carry_names:
+                    breakout_overlap.append(f"{name} ({row.day:%m/%d}, {signal_type})")
+                    technical_support.append(f"{name} ({row.day:%m/%d}, breakout)")
+
+        for signal_type, rows in states.items():
+            for item in rows:
+                name = item.get("stock_name")
+                if name in carry_names and signal_type.startswith("near_"):
+                    near_high_overlap.append(f"{name} ({row.day:%m/%d}, {signal_type})")
+                    technical_support.append(f"{name} ({row.day:%m/%d}, near-high)")
+
+    return HighSignalOverlap(
+        breakout_overlap=_dedupe_keep_order(breakout_overlap),
+        near_high_overlap=_dedupe_keep_order(near_high_overlap),
+        technical_support_names=_dedupe_keep_order(technical_support),
+        generated_days=_dedupe_keep_order(generated_days),
+        missing_days=_dedupe_keep_order(missing_days),
+        empty_days=_dedupe_keep_order(empty_days),
+    )
+
+
 def join_themes_for_sentence(clusters: list[ThemeCluster], limit: int = 3) -> str:
     names = [cluster.name for cluster in clusters[:limit]]
     if not names:
@@ -326,6 +420,8 @@ def build_content(context: PrepContext) -> str:
     if len(residual_names) < 4:
         residual_names.extend(context.ungrouped_names[: max(0, 4 - len(residual_names))])
     recurrence = theme_recurrence_count(context.recent_recaps)
+    carry_names = {name for cluster in top_clusters[:6] for name in cluster.members}
+    overlap = collect_high_signal_overlap(context.recent_recaps, carry_names)
 
     lines: list[str] = [
         render_frontmatter(context),
@@ -362,13 +458,30 @@ def build_content(context: PrepContext) -> str:
     lines.append("- 전날 하루만 보는 게 아니라, 최근 5거래일 정리 데이터에서 `집중 -> 분산 -> 재선별` 흐름이 어떻게 이어졌는지 위 기준선 위에서 판단한다.")
 
     lines.extend(["", "## 신고가 / high-signal 팩트층"])
-    if has_same_window_high_signal(context.recent_recaps):
-        lines.append("- 최근 5거래일 구간 안에 로컬 high-signal snapshot이 존재한다. 다음 단계에서는 carry-over 후보와 snapshot overlap을 직접 결합해야 한다.")
+    if overlap.generated_days:
+        lines.append(f"- recent 5거래일 window high-signal snapshot 확보: {', '.join(overlap.generated_days)}")
+    if overlap.missing_days:
+        lines.append(f"- snapshot 생성/확인 실패 날짜: {', '.join(overlap.missing_days)}")
+    if overlap.empty_days:
+        lines.append(f"- stock_prices.db 기준 high-signal 결과가 비어 있는 날짜: {', '.join(overlap.empty_days)}")
+    if overlap.breakout_overlap:
+        lines.append("- breakout overlap 종목")
+        lines.extend(f"  - {item}" for item in overlap.breakout_overlap[:12])
     else:
-        lines.append("- 현재 로컬 기준 최근 5거래일 구간에는 exact-date high-signal snapshot이 없다.")
+        lines.append("- breakout overlap 종목: 없음")
+    if overlap.near_high_overlap:
+        lines.append("- near-52w-high / near-ATH overlap 종목")
+        lines.extend(f"  - {item}" for item in overlap.near_high_overlap[:12])
+    else:
+        lines.append("- near-52w-high / near-ATH overlap 종목: 없음")
+    if overlap.technical_support_names:
+        lines.append("- carry-over theme와 겹치는 technical support names")
+        lines.extend(f"  - {item}" for item in overlap.technical_support_names[:12])
+    else:
+        lines.append("- carry-over theme와 겹치는 technical support names: 없음")
     lines.extend([
-        "- 따라서 이번 prep은 특정 종목을 `신고가/high-signal confirmed`로 단정하지 않고, **validated recap 기반 군집 연속성 + 최근 5거래일 반복 등장 + leader breadth**를 우선 근거로 쓴다.",
-        "- 다음부터는 high-signal snapshot이 있으면 carry-over theme와 겹치는 breakout / near-high 이름을 이 섹션에 명시적으로 끌어와야 한다.",
+        "- 해석 규칙: breakout overlap은 강한 기술적 확인, near-high overlap은 후속 추세 후보, 둘 다 없으면 recap/이벤트 기반 해석 우선으로 본다.",
+        "- 즉 이 섹션은 단순 참고가 아니라 carry-over 후보 중 기술적으로 받쳐주는 이름을 장전 전에 걸러내는 층이다.",
     ])
 
     lines.extend(["", "## Carry-over themes 선정 근거"])
@@ -463,8 +576,11 @@ def main() -> int:
         return 0
 
     if context.existing_path.exists() and not args.overwrite:
-        print(f"SKIP existing {context.existing_path}")
-        return 0
+        existing_text = context.existing_path.read_text(encoding="utf-8")
+        existing_frontmatter = parse_frontmatter(existing_text)
+        if existing_frontmatter.get("generation_mode") != "auto_prior_close_scaffold":
+            print(f"SKIP existing {context.existing_path}")
+            return 0
 
     content = build_content(context)
     context.existing_path.parent.mkdir(parents=True, exist_ok=True)

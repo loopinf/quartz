@@ -1,8 +1,8 @@
 ---
 id: next-session-prep-2026-04-24
 note_type: next_session_prep
-created_at: 2026-04-24 12:23:26 KST
-updated_at: 2026-04-24 12:23:26 KST
+created_at: 2026-04-24 12:31:53 KST
+updated_at: 2026-04-24 12:31:53 KST
 session_date: 2026-04-24
 source_note: 2026-04-23_top30_recap
 supporting_notes: ["2026-04-23_evening-briefing-input", "2026-04-23_evening-briefing", "2026-04-23_top30_recap", "2026-04-22_top30_recap", "2026-04-21_top30_recap", "2026-04-20_top30_recap", "2026-04-23_제약바이오_모멘텀", "2026-04-23_반도체소부장_모멘텀", "2026-04-23_원전_모멘텀", "2026-04-23_전력기기_모멘텀", "2026-04-23_코로나_모멘텀"]
@@ -40,9 +40,49 @@ same_day_intraday_excluded: true
 - 전날 하루만 보는 게 아니라, 최근 5거래일 정리 데이터에서 `집중 -> 분산 -> 재선별` 흐름이 어떻게 이어졌는지 위 기준선 위에서 판단한다.
 
 ## 신고가 / high-signal 팩트층
-- 현재 로컬 기준 최근 5거래일 구간에는 exact-date high-signal snapshot이 없다.
-- 따라서 이번 prep은 특정 종목을 `신고가/high-signal confirmed`로 단정하지 않고, **validated recap 기반 군집 연속성 + 최근 5거래일 반복 등장 + leader breadth**를 우선 근거로 쓴다.
-- 다음부터는 high-signal snapshot이 있으면 carry-over theme와 겹치는 breakout / near-high 이름을 이 섹션에 명시적으로 끌어와야 한다.
+- recent 5거래일 window high-signal snapshot 확보: 2026-04-23, 2026-04-22, 2026-04-21, 2026-04-20, 2026-04-17
+- stock_prices.db 기준 high-signal 결과가 비어 있는 날짜: 2026-04-20
+- breakout overlap 종목
+  - 대원전선 (04/23, 52w_breakout)
+  - OCI (04/23, 52w_breakout)
+  - 가온전선 (04/23, 52w_breakout)
+  - 엘티씨 (04/23, 52w_breakout)
+  - 코스텍시스 (04/23, 52w_breakout)
+  - 피엠티 (04/23, 52w_breakout)
+  - 대원전선 (04/23, ath_breakout)
+  - 가온전선 (04/23, ath_breakout)
+  - 엘티씨 (04/23, ath_breakout)
+  - 코스텍시스 (04/23, ath_breakout)
+  - OCI (04/22, 52w_breakout)
+  - 가온전선 (04/22, 52w_breakout)
+- near-52w-high / near-ATH overlap 종목
+  - 삼성제약 (04/23, near_52w_high_95)
+  - 보성파워텍 (04/23, near_52w_high_90)
+  - 보성파워텍 (04/23, near_ath_90)
+  - 코스텍시스 (04/22, near_52w_high_95)
+  - 코스텍시스 (04/22, near_ath_95)
+  - OCI (04/21, near_52w_high_90)
+  - 코스텍시스 (04/21, near_52w_high_90)
+  - 코스텍시스 (04/21, near_ath_90)
+  - 가온전선 (04/17, near_52w_high_95)
+  - 엘티씨 (04/17, near_52w_high_95)
+  - OCI (04/17, near_52w_high_90)
+  - 휴온스글로벌 (04/17, near_52w_high_90)
+- carry-over theme와 겹치는 technical support names
+  - 대원전선 (04/23, breakout)
+  - OCI (04/23, breakout)
+  - 가온전선 (04/23, breakout)
+  - 엘티씨 (04/23, breakout)
+  - 코스텍시스 (04/23, breakout)
+  - 피엠티 (04/23, breakout)
+  - 삼성제약 (04/23, near-high)
+  - 보성파워텍 (04/23, near-high)
+  - OCI (04/22, breakout)
+  - 가온전선 (04/22, breakout)
+  - 엘티씨 (04/22, breakout)
+  - 코스텍시스 (04/22, near-high)
+- 해석 규칙: breakout overlap은 강한 기술적 확인, near-high overlap은 후속 추세 후보, 둘 다 없으면 recap/이벤트 기반 해석 우선으로 본다.
+- 즉 이 섹션은 단순 참고가 아니라 carry-over 후보 중 기술적으로 받쳐주는 이름을 장전 전에 걸러내는 층이다.
 
 ## Carry-over themes 선정 근거
 ### 1순위 primary check
