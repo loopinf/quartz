@@ -1,8 +1,8 @@
 ---
 id: next-session-prep-2026-04-24
 note_type: next_session_prep
-created_at: 2026-04-24 11:54:59 KST
-updated_at: 2026-04-24 11:54:59 KST
+created_at: 2026-04-24 12:23:26 KST
+updated_at: 2026-04-24 12:23:26 KST
 session_date: 2026-04-24
 source_note: 2026-04-23_top30_recap
 supporting_notes: ["2026-04-23_evening-briefing-input", "2026-04-23_evening-briefing", "2026-04-23_top30_recap", "2026-04-22_top30_recap", "2026-04-21_top30_recap", "2026-04-20_top30_recap", "2026-04-23_제약바이오_모멘텀", "2026-04-23_반도체소부장_모멘텀", "2026-04-23_원전_모멘텀", "2026-04-23_전력기기_모멘텀", "2026-04-23_코로나_모멘텀"]
@@ -39,32 +39,49 @@ same_day_intraday_excluded: true
 - 동시에 `반도체소부장`가 보조/공동 주도축으로 붙는지 확인해야 하며, 대표 종목은 코스텍시스, 피엠티, 엘티씨다.
 - 전날 하루만 보는 게 아니라, 최근 5거래일 정리 데이터에서 `집중 -> 분산 -> 재선별` 흐름이 어떻게 이어졌는지 위 기준선 위에서 판단한다.
 
-## Carry-over themes
+## 신고가 / high-signal 팩트층
+- 현재 로컬 기준 최근 5거래일 구간에는 exact-date high-signal snapshot이 없다.
+- 따라서 이번 prep은 특정 종목을 `신고가/high-signal confirmed`로 단정하지 않고, **validated recap 기반 군집 연속성 + 최근 5거래일 반복 등장 + leader breadth**를 우선 근거로 쓴다.
+- 다음부터는 high-signal snapshot이 있으면 carry-over theme와 겹치는 breakout / near-high 이름을 이 섹션에 명시적으로 끌어와야 한다.
+
+## Carry-over themes 선정 근거
 ### 1순위 primary check
 - 제약바이오
   - 바이젠셀
   - 리센스메디컬
   - 삼성제약
   - 티움바이오
+  - **근거**: 04/23 validated recap에서 6개로 상위 군집이었다.
 - 반도체소부장
   - 코스텍시스
   - 피엠티
   - 엘티씨
   - OCI
+  - **근거**: 04/23 validated recap에서 4개로 상위 군집이었다.
+  - **근거**: 최근 5거래일 중 3회 반복 등장해 carry-over 지속성 후보다.
 
 ### 2순위 expansion check
 - 원전
   - 서전기전
   - 보성파워텍
   - 오르비텍
+  - **근거**: 당일 메인 leader는 아니지만 후속 확산이 붙으면 해석 강도가 커지는 보조 축이다.
 - 전력기기
   - 대원전선
   - 가온전선
+  - **근거**: 당일 메인 leader는 아니지만 후속 확산이 붙으면 해석 강도가 커지는 보조 축이다.
 
 ### 3순위 residual / rotation check
 - 코로나
   - 유투바이오
   - 휴온스글로벌
+  - **근거**: 메인 시나리오가 약해질 때 대체 순환으로 붙는지 보는 residual bucket이다.
+
+## Priority names / sectors 선정 근거
+- `A. leader 확인`은 당일 breadth 상위 군집의 중심 이름들이다.
+- `B. 후속 확산 확인`은 cluster로 같이 움직이면 해석이 강해지는 이름들이다.
+- `C. 재집중 / 반전 확인`은 메인 시나리오 실패 시 대체 순환 후보를 보는 observation bucket이다.
+- 즉 이 리스트는 매수 추천이 아니라, **장초 observation priority** 순서다.
 
 ## What to check at the open
 1. **제약바이오가 장초부터 거래대금 leader로 유지되는지 확인**

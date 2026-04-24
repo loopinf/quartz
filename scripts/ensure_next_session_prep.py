@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import ast
+import json
 import re
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
@@ -13,6 +14,7 @@ KST = ZoneInfo("Asia/Seoul")
 WEEKDAY_KO = ["월", "화", "수", "목", "금", "토", "일"]
 DOMINANT_THEME_RE = re.compile(r"^-\s+([^:]+):\s+(\d+)개\s+\((.*)\)\s*$")
 LINK_RE = re.compile(r"\[\[(?:[^\]|]+/)?([^\]|]+)(?:\|[^\]]+)?\]\]")
+HIGH_SIGNAL_DIR = Path("/Users/gbserver/repos/jmkr_kj/data/signals/high-signals")
 
 
 @dataclass(frozen=True)
@@ -195,8 +197,23 @@ def summarize_recent_theme_recurrence(recent_recaps: list[RecentRecap]) -> list[
     return [f"- `{theme}`: 최근 {len(recent_recaps)}거래일 중 {cnt}회 등장" for theme, cnt in ordered[:4]]
 
 
+def theme_recurrence_count(recent_recaps: list[RecentRecap]) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for row in recent_recaps:
+        for theme in row.themes:
+            counts[theme] = counts.get(theme, 0) + 1
+    return counts
+
+
 def recent_recap_reference_lines(recent_recaps: list[RecentRecap]) -> list[str]:
     return [f"- [[{row.path.stem}]] — {', '.join(row.themes[:4]) if row.themes else 'theme parse unavailable'}" for row in recent_recaps]
+
+
+def has_same_window_high_signal(recent_recaps: list[RecentRecap]) -> bool:
+    for row in recent_recaps:
+        if (HIGH_SIGNAL_DIR / f"{row.day:%Y-%m-%d}.json").exists():
+            return True
+    return False
 
 
 def join_themes_for_sentence(clusters: list[ThemeCluster], limit: int = 3) -> str:
@@ -251,6 +268,7 @@ def build_context(vault_market_intel: Path, target_date: date) -> PrepContext:
         raise RuntimeError(f"no dominant theme structure parsed from {recap_path.name}")
 
     event_slugs = parse_event_slugs(recap_text, base_date)
+    recent_recaps = collect_recent_validated_recaps(daily_dir, base_date, limit=5)
     return PrepContext(
         target_date=target_date,
         base_date=base_date,
@@ -261,7 +279,7 @@ def build_context(vault_market_intel: Path, target_date: date) -> PrepContext:
         event_slugs=event_slugs,
         theme_clusters=theme_clusters,
         ungrouped_names=ungrouped_names,
-        recent_recaps=collect_recent_validated_recaps(daily_dir, base_date, limit=5),
+        recent_recaps=recent_recaps,
     )
 
 
@@ -307,6 +325,7 @@ def build_content(context: PrepContext) -> str:
     residual_names = [name for cluster in residual for name in limited_members(cluster, 2)]
     if len(residual_names) < 4:
         residual_names.extend(context.ungrouped_names[: max(0, 4 - len(residual_names))])
+    recurrence = theme_recurrence_count(context.recent_recaps)
 
     lines: list[str] = [
         render_frontmatter(context),
@@ -340,36 +359,58 @@ def build_content(context: PrepContext) -> str:
     if len(top_clusters) >= 2:
         second = top_clusters[1]
         lines.append(f"- 동시에 `{second.name}`가 보조/공동 주도축으로 붙는지 확인해야 하며, 대표 종목은 {', '.join(limited_members(second, 3))}다.")
-    if context.ungrouped_names:
-        lines.append(f"- 개별주/혼합 반응은 {', '.join(context.ungrouped_names[:5])} 쪽이므로, 군집보다 개별 수급으로 흩어지는지 같이 본다.")
     lines.append("- 전날 하루만 보는 게 아니라, 최근 5거래일 정리 데이터에서 `집중 -> 분산 -> 재선별` 흐름이 어떻게 이어졌는지 위 기준선 위에서 판단한다.")
 
-    lines.extend(["", "## Carry-over themes"])
+    lines.extend(["", "## 신고가 / high-signal 팩트층"])
+    if has_same_window_high_signal(context.recent_recaps):
+        lines.append("- 최근 5거래일 구간 안에 로컬 high-signal snapshot이 존재한다. 다음 단계에서는 carry-over 후보와 snapshot overlap을 직접 결합해야 한다.")
+    else:
+        lines.append("- 현재 로컬 기준 최근 5거래일 구간에는 exact-date high-signal snapshot이 없다.")
+    lines.extend([
+        "- 따라서 이번 prep은 특정 종목을 `신고가/high-signal confirmed`로 단정하지 않고, **validated recap 기반 군집 연속성 + 최근 5거래일 반복 등장 + leader breadth**를 우선 근거로 쓴다.",
+        "- 다음부터는 high-signal snapshot이 있으면 carry-over theme와 겹치는 breakout / near-high 이름을 이 섹션에 명시적으로 끌어와야 한다.",
+    ])
+
+    lines.extend(["", "## Carry-over themes 선정 근거"])
     if primary:
         lines.append("### 1순위 primary check")
         for cluster in primary:
             lines.append(f"- {cluster.name}")
             lines.extend(bullet_members(limited_members(cluster, 4)))
+            lines.append(f"  - **근거**: {context.base_date:%m/%d} validated recap에서 {cluster.count}개로 상위 군집이었다.")
+            if recurrence.get(cluster.name, 0) >= 2:
+                lines.append(f"  - **근거**: 최근 5거래일 중 {recurrence[cluster.name]}회 반복 등장해 carry-over 지속성 후보다.")
     if expansion:
         lines.append("")
         lines.append("### 2순위 expansion check")
         for cluster in expansion:
             lines.append(f"- {cluster.name}")
             lines.extend(bullet_members(limited_members(cluster, 3)))
+            lines.append("  - **근거**: 당일 메인 leader는 아니지만 후속 확산이 붙으면 해석 강도가 커지는 보조 축이다.")
+            if recurrence.get(cluster.name, 0) >= 2:
+                lines.append(f"  - **근거**: 최근 5거래일 중 {recurrence[cluster.name]}회 등장해 재등장/재점화 가능성이 있다.")
     if residual or context.ungrouped_names:
         lines.append("")
         lines.append("### 3순위 residual / rotation check")
         for cluster in residual:
             lines.append(f"- {cluster.name}")
             lines.extend(bullet_members(limited_members(cluster, 2)))
+            lines.append("  - **근거**: 메인 시나리오가 약해질 때 대체 순환으로 붙는지 보는 residual bucket이다.")
         if context.ungrouped_names:
             lines.append("- 개별주/혼합")
             lines.extend(bullet_members(context.ungrouped_names[:5]))
+            lines.append("  - **근거**: 군집보다 개별 수급 반응으로 남은 이름들이다.")
 
     first_theme = top_clusters[0].name if top_clusters else "주도 테마"
     second_theme = top_clusters[1].name if len(top_clusters) >= 2 else "보조 축"
     third_theme = top_clusters[2].name if len(top_clusters) >= 3 else "후속 확산 테마"
     lines.extend([
+        "",
+        "## Priority names / sectors 선정 근거",
+        "- `A. leader 확인`은 당일 breadth 상위 군집의 중심 이름들이다.",
+        "- `B. 후속 확산 확인`은 cluster로 같이 움직이면 해석이 강해지는 이름들이다.",
+        "- `C. 재집중 / 반전 확인`은 메인 시나리오 실패 시 대체 순환 후보를 보는 observation bucket이다.",
+        "- 즉 이 리스트는 매수 추천이 아니라, **장초 observation priority** 순서다.",
         "",
         "## What to check at the open",
         f"1. **{first_theme}가 장초부터 거래대금 leader로 유지되는지 확인**",
