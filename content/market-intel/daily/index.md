@@ -5,8 +5,8 @@ summary: 현재 세션 필수 daily 문서가 exact-date 기준으로 준비됐�
 
 # Daily Workspace
 
-## 오늘 장전 준비 상태 (<span data-mi-current-label="1" data-mi-current-date="2026-04-23" data-mi-current-phase="장중">2026-04-23 KST, 목요일 장중</span>)
-- 실시간 KST 기준: <span id="market-intel-now-label">2026-04-23 KST, 목요일 장중</span>
+## 오늘 장전 준비 상태 (<span data-mi-current-label="1" data-mi-current-date="2026-04-24" data-mi-current-phase="장중">2026-04-24 KST, 금요일 장중</span>)
+- 실시간 KST 기준: <span id="market-intel-now-label">2026-04-24 KST, 금요일 장중</span>
 <script id="market-intel-now-script">
 (() => {
   const el = document.getElementById('market-intel-now-label');
@@ -30,41 +30,41 @@ summary: 현재 세션 필수 daily 문서가 exact-date 기준으로 준비됐�
 - [진행상황판](/market-intel/current-readiness-board)
 - 자동 확인 순서: `prep → validated recap → close input`
 
-- `READY` 오늘 세션 prep: [2026-04-23_next-session-prep](/market-intel/daily/2026-04-23_next-session-prep)
-  - 오늘 세션용 prep가 2026-04-23_next-session-prep로 준비되어 있다.
-- `READY` 직전 장 validated recap: [2026-04-22_top30_recap](/market-intel/daily/2026-04-22_top30_recap)
-  - 직전 장 기준 validated recap가 2026-04-22_top30_recap로 준비되어 있다.
-- `READY` 직전 장 close input: [2026-04-22_evening-briefing-input](/market-intel/daily/2026-04-22_evening-briefing-input)
-  - 직전 장 close input이 2026-04-22_evening-briefing-input로 준비되어 있다.
+- `READY` 오늘 세션 prep: [2026-04-24_next-session-prep](/market-intel/daily/2026-04-24_next-session-prep)
+  - 오늘 세션용 prep가 2026-04-24_next-session-prep로 준비되어 있다.
+- `READY` 직전 장 validated recap: [2026-04-23_top30_recap](/market-intel/daily/2026-04-23_top30_recap)
+  - 직전 장 기준 validated recap가 2026-04-23_top30_recap로 준비되어 있다.
+- `READY` 직전 장 close input: [2026-04-23_evening-briefing-input](/market-intel/daily/2026-04-23_evening-briefing-input)
+  - 직전 장 close input이 2026-04-23_evening-briefing-input로 준비되어 있다.
 
 ## recovery-needed 체크
 - recovery-needed 상태 아님
 
 ## 오늘 바로 열 것
 1. [진행상황판에서 exact-date readiness 확인](/market-intel/current-readiness-board)
-2. [오늘 세션 prep 열기](/market-intel/daily/2026-04-23_next-session-prep)
-3. [직전 장 validated recap](/market-intel/daily/2026-04-22_top30_recap)
-4. [직전 장 close input](/market-intel/daily/2026-04-22_evening-briefing-input)
+2. [오늘 세션 prep 열기](/market-intel/daily/2026-04-24_next-session-prep)
+3. [직전 장 validated recap](/market-intel/daily/2026-04-23_top30_recap)
+4. [직전 장 close input](/market-intel/daily/2026-04-23_evening-briefing-input)
 5. [prediction workspace](/market-intel/research/prediction-workspace)
 
 ## 최근 usable 기록
 ### Session prep
+- [2026-04-24_next-session-prep](/market-intel/daily/2026-04-24_next-session-prep)
 - [2026-04-23_next-session-prep](/market-intel/daily/2026-04-23_next-session-prep)
 - [2026-04-22_next-session-prep](/market-intel/daily/2026-04-22_next-session-prep)
-- [2026-04-20_next-session-prep](/market-intel/daily/2026-04-20_next-session-prep)
-- [2026-04-17_next-session-prep](/market-intel/daily/2026-04-17_next-session-prep)
+- [2026-04-21_next-session-prep](/market-intel/daily/2026-04-21_next-session-prep)
 
 ### Validated recap
+- [2026-04-23_top30_recap](/market-intel/daily/2026-04-23_top30_recap)
 - [2026-04-22_top30_recap](/market-intel/daily/2026-04-22_top30_recap)
 - [2026-04-21_top30_recap](/market-intel/daily/2026-04-21_top30_recap)
 - [2026-04-20_top30_recap](/market-intel/daily/2026-04-20_top30_recap)
-- [2026-04-17_top30_recap](/market-intel/daily/2026-04-17_top30_recap)
 
 ### Close input
+- [2026-04-23_evening-briefing-input](/market-intel/daily/2026-04-23_evening-briefing-input)
 - [2026-04-22_evening-briefing-input](/market-intel/daily/2026-04-22_evening-briefing-input)
 - [2026-04-21_evening-briefing-input](/market-intel/daily/2026-04-21_evening-briefing-input)
 - [2026-04-20_evening-briefing-input](/market-intel/daily/2026-04-20_evening-briefing-input)
-- [2026-04-17_evening-briefing-input](/market-intel/daily/2026-04-17_evening-briefing-input)
 
 ## 용어 정리
 - `필수 문서`: 현재 세션 시점에 exact-date로 준비돼 있어야 하는 문서

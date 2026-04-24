@@ -6,9 +6,9 @@ export const MARKET_INTEL_EXPLORER_KEEP_ENTRIES = [
   "market-intel/research/prediction-workspace",
   "market-intel/research/portfolio-pilot-review-dashboard",
   "market-intel/workflows/predictive-replay-and-review-system",
-  "market-intel/daily/2026-04-22_next-session-prep",
-  "market-intel/daily/2026-04-22_top30_recap",
-  "market-intel/daily/2026-04-22_evening-briefing-input",
+  "market-intel/daily/2026-04-24_next-session-prep",
+  "market-intel/daily/2026-04-23_top30_recap",
+  "market-intel/daily/2026-04-23_evening-briefing-input",
 ] as const
 
 export const MARKET_INTEL_EXPLORER_LABELS: Record<string, string> = {
@@ -28,7 +28,7 @@ export const MARKET_INTEL_EXPLORER_LABELS: Record<string, string> = {
   "prediction-workspace": "Prediction Workspace",
   "portfolio-pilot-review-dashboard": "예측 후보 대시보드",
   "predictive-replay-and-review-system": "Predictive Replay",
-  "2026-04-22_next-session-prep": "fallback prep (2026-04-22)",
-  "2026-04-22_top30_recap": "직전 장 validated recap",
-  "2026-04-22_evening-briefing-input": "직전 장 close input",
+  "2026-04-24_next-session-prep": "오늘 세션 prep",
+  "2026-04-23_top30_recap": "직전 장 validated recap",
+  "2026-04-23_evening-briefing-input": "직전 장 close input",
 }
