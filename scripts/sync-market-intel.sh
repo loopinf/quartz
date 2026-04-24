@@ -17,6 +17,9 @@ python3 "$ROOT/scripts/ensure_evening_briefing_output.py" \
 python3 "$ROOT/scripts/ensure_next_session_prep.py" \
   --vault-path "$VAULT_PATH"
 
+python3 "$ROOT/scripts/enrich_next_session_prep_with_outcome_summary.py" \
+  --vault-path "$VAULT_PATH"
+
 python3 "$ROOT/scripts/update_market_intel_entrypoints.py" \
   --vault-path "$VAULT_PATH" \
   --site-root "$ROOT"

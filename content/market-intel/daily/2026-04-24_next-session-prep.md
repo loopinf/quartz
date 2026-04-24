@@ -1,8 +1,8 @@
 ---
 id: next-session-prep-2026-04-24
 note_type: next_session_prep
-created_at: 2026-04-24 12:31:53 KST
-updated_at: 2026-04-24 12:31:53 KST
+created_at: 2026-04-24 12:33:17 KST
+updated_at: 2026-04-24 12:33:17 KST
 session_date: 2026-04-24
 source_note: 2026-04-23_top30_recap
 supporting_notes: ["2026-04-23_evening-briefing-input", "2026-04-23_evening-briefing", "2026-04-23_top30_recap", "2026-04-22_top30_recap", "2026-04-21_top30_recap", "2026-04-20_top30_recap", "2026-04-23_제약바이오_모멘텀", "2026-04-23_반도체소부장_모멘텀", "2026-04-23_원전_모멘텀", "2026-04-23_전력기기_모멘텀", "2026-04-23_코로나_모멘텀"]
@@ -83,6 +83,39 @@ same_day_intraday_excluded: true
   - 코스텍시스 (04/22, near-high)
 - 해석 규칙: breakout overlap은 강한 기술적 확인, near-high overlap은 후속 추세 후보, 둘 다 없으면 recap/이벤트 기반 해석 우선으로 본다.
 - 즉 이 섹션은 단순 참고가 아니라 carry-over 후보 중 기술적으로 받쳐주는 이름을 장전 전에 걸러내는 층이다.
+
+## Conditional probability / entry-rule summary
+- full-range breakout baseline (2025-04-01 ~ 2026-04-16, vectorbtpro recheck)
+  - `wait_2d_close`: 20d avg `4.43%`, 10d avg `2.12%`, 20d win `0.5703`
+  - `wait_3d_close`: 20d avg `4.34%`, 10d avg `2.1%`, 20d win `0.5683`
+  - `next_open`: 20d avg `4.47%`, 10d avg `2.11%`, 20d win `0.5697`
+- baseline 해석: 전구간 breakout backtest에선 `wait_2d_close / wait_3d_close / next_open`이 Sharpe 기준 상위권이고, `pullback` 계열은 평균 수익은 강하지만 available 비율을 같이 봐야 한다.
+
+### 현재 prep 종목에 대한 lookup
+- `대원전선`: stock-specific 표본이 부족해서 global breakout baseline을 우선 참조해야 한다.
+- `OCI`: stock-specific breakout history 기준 우세 rule → `pullback_4pct`(20d avg 16.06%, avail 11/14), `wait_3d_close`(20d avg 14.34%, avail 11/14)
+- `가온전선`: stock-specific 표본이 부족해서 global breakout baseline을 우선 참조해야 한다.
+- `엘티씨`: stock-specific breakout history 기준 우세 rule → `pullback_4pct`(20d avg 2.48%, avail 38/44), `pullback_2pct`(20d avg 1.4%, avail 38/44)
+- `코스텍시스`: stock-specific breakout history 기준 우세 rule → `wait_2d_close`(20d avg 22.0%, avail 14/16), `pullback_2pct`(20d avg 21.84%, avail 14/16)
+- `피엠티`: stock-specific breakout history 기준 우세 rule → `next_open`(20d avg 2.44%, avail 7/8), `wait_1d_close`(20d avg 2.44%, avail 7/8)
+- `삼성제약`: stock-specific 표본이 부족해서 global breakout baseline을 우선 참조해야 한다.
+- `보성파워텍`: stock-specific breakout history 기준 우세 rule → `same_close`(20d avg 18.05%, avail 27/27), `pullback_2pct`(20d avg 17.45%, avail 26/27)
+
+### breakout overlap basket 요약
+- `pullback_4pct`: 20d avg `3.02%`, 5d avg `0.53%`, available `96/118`
+- `pullback_2pct`: 20d avg `2.3%`, 5d avg `-1.06%`, available `97/118`
+- `wait_3d_close`: 20d avg `1.38%`, 5d avg `-0.23%`, available `94/118`
+- 사용법: breakout overlap 이름들은 기본적으로 `same_close` 추격보다 위 우세 rule을 먼저 검토하고, available 비율이 낮은 pullback rule은 miss-trade bias를 함께 본다.
+
+### near-high overlap 해석 규칙
+- direct near-high state outcome table는 아직 따로 export되지 않았다.
+- 따라서 near-high 이름은 즉시 매매 rule을 단정하기보다, breakout overlap으로 전환되는지와 최근 breakout baseline(`next_open / wait_1d_close / pullback`)을 함께 참조한다.
+- 다음 단계는 near-high state 자체를 anchor로 한 별도 outcome table을 추가하는 것이다.
+
+### prep에서 쓰는 요령
+- `technical support names` 안에서도 stock-specific 표본이 있는 이름은 개별 lookup을 우선 본다.
+- 표본이 약하면 basket 요약과 full-range baseline을 우선 사용한다.
+- 이 섹션은 매수 추천이 아니라 **장전 우선 확인 rule lookup**이다.
 
 ## Carry-over themes 선정 근거
 ### 1순위 primary check
