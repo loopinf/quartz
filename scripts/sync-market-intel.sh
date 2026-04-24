@@ -11,6 +11,9 @@ if [ ! -d "$SOURCE" ]; then
   exit 1
 fi
 
+python3 "$ROOT/scripts/ensure_evening_briefing_output.py" \
+  --vault-path "$VAULT_PATH"
+
 python3 "$ROOT/scripts/ensure_next_session_prep.py" \
   --vault-path "$VAULT_PATH"
 

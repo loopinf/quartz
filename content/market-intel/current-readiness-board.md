@@ -40,8 +40,8 @@ summary: 지금 세션 기준으로 필요한 핵심 daily 문서가 자동으�
   - 직전 장 close input이 2026-04-23_evening-briefing-input로 준비되어 있다.
 
 ## 운영 추가 체크
-- `MISSING` final evening briefing output: 필요 문서 `2026-04-23_evening-briefing`
-  - 최신 fallback output: [2026-04-22_evening-briefing](/market-intel/daily/2026-04-22_evening-briefing)
+- `READY` final evening briefing output: [2026-04-23_evening-briefing](/market-intel/daily/2026-04-23_evening-briefing)
+  - 현재 세션 기준 briefing output이 2026-04-23_evening-briefing로 존재한다.
 - `READY` required close archive: `/Users/gbserver/repos/jmkr_kj/data/daily/archive/2026-04-23.json`
   - 현재 세션에 필요한 close archive가 존재하고 validation 통과: market_close + is_empty=false + TOP30 문구 + 번호 라인 26개
 - `WAITING` same-day source archive: `/Users/gbserver/repos/jmkr_kj/data/daily/archive/2026-04-24.json`
@@ -73,7 +73,7 @@ summary: 지금 세션 기준으로 필요한 핵심 daily 문서가 자동으�
 - 최신 prep: [2026-04-24_next-session-prep](/market-intel/daily/2026-04-24_next-session-prep)
 - 최신 validated recap: [2026-04-23_top30_recap](/market-intel/daily/2026-04-23_top30_recap)
 - 최신 close input: [2026-04-23_evening-briefing-input](/market-intel/daily/2026-04-23_evening-briefing-input)
-- 최신 evening briefing output: [2026-04-22_evening-briefing](/market-intel/daily/2026-04-22_evening-briefing)
+- 최신 evening briefing output: [2026-04-23_evening-briefing](/market-intel/daily/2026-04-23_evening-briefing)
 - same-day archive path: `/Users/gbserver/repos/jmkr_kj/data/daily/archive/2026-04-24.json` (missing yet)
 
 ## 이 페이지를 어떻게 써야 하나
