@@ -76,6 +76,23 @@ summary: 지금 세션 기준으로 필요한 핵심 daily 문서가 자동으�
 - 최신 evening briefing output: [2026-04-23_evening-briefing](/market-intel/daily/2026-04-23_evening-briefing)
 - same-day archive path: `/Users/gbserver/repos/jmkr_kj/data/daily/archive/2026-04-24.json` (missing yet)
 
+## 자동 생성 체인 / 현재 막힘 위치
+### 자동 체인 개요
+1. `same-day source recovery/watch` — 장마감 전후 archive 확보/복구 감시 (`jmkr-same-day-auto-recovery-close-window`, `jmkr-top30-same-day-late-check-and-ingest`)
+2. `validated recap ingest` — close archive validation 통과 시 exact-date `*_top30_recap` 생성
+3. `evening-briefing-input` — 장마감 입력 레이어 생성 (`local-only-evening-briefing-input`)
+4. `evening briefing output` — input을 decision-oriented output note로 자동 변환 (`market-intel-evening-briefing-auto-create`, 18:50 KST)
+5. `next-session-prep` — 직전 장 문서를 바탕으로 다음 세션 prep 자동 보강 (`market-intel-next-session-prep-auto-create`, 06:05 KST)
+6. `Quartz sync/build` — `sync-market-intel.sh`가 entrypoint/readiness를 다시 계산해 8081에 반영
+
+### 현재 체인 상태
+- `WAITING` 당일 source archive — 장전/장중에는 아직 없어도 정상
+- `READY` 직전 장 validated recap — 2026-04-23_top30_recap
+- `READY` 직전 장 close input — 2026-04-23_evening-briefing-input
+- `READY` final evening briefing output — 2026-04-23_evening-briefing
+- `READY` next-session prep — 2026-04-24_next-session-prep
+- 현재 막힘: prior-close -> briefing -> prep 문서 체인은 현재 기준으로 이어져 있다. 남은 불확실성은 same-day source/archive 쪽이다.
+
 ## 이 페이지를 어떻게 써야 하나
 - 이 페이지는 **지금 세션에 필요한 문서가 최신인지**를 먼저 확인하는 운영 현황판이다.
 - `MISSING`이면 target 문서가 아직 없다는 뜻이고, fallback은 참고용일 뿐 target을 대체한 것으로 간주하지 않는다.

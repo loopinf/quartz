@@ -1,11 +1,69 @@
 ---
 id: market-intel-recent-changes
 created_at: 2026-04-16 15:23:49 KST
-updated_at: 2026-04-23 05:56:00 KST
+updated_at: 2026-04-24 10:34:00 KST
 reviewer: 헤르메스(ㅎㅁ)
 ---
 
 # Market Intel Recent Changes
+
+## 2026-04-24 10:34:00 KST — auto-chain visibility surfaced on Quartz + readiness board
+
+### Updated
+- Entry generator: `/Users/gbserver/market-intel-site/scripts/update_market_intel_entrypoints.py`
+- Status board: [[current-readiness-board|current-readiness-board]]
+- Market Intel home: [[index]]
+- Progress overview: [[market-intel-progress-big-picture]]
+- Change log: [[MARKET_INTEL_RECENT_CHANGES]]
+
+### What changed semantically
+- readiness board와 Market Intel 홈에 **자동 생성 체인** 섹션을 추가해, `same-day source → validated recap → close input → evening briefing output → next-session-prep → Quartz sync` 흐름을 한눈에 보이게 했다.
+- 각 단계가 지금 `READY / WAITING / BLOCKED / AUTO-FILL TARGET / RECOVERY_NEEDED` 중 어디인지 표시하고, **현재 막힘이 문서 체인인지 source/archive 체인인지**를 바로 읽을 수 있게 했다.
+- 큰그림 문서도 briefing lane 설명을 최신 상태로 고쳐, `evening-briefing` / `next-session-prep` exact-date auto-fill이 이미 붙어 있고 남은 핵심 gap은 same-day source 안정성임을 명시했다.
+
+## 2026-04-23 18:41:28 KST — JMKR TOP30 archive ingest (2026-04-23)
+
+### Added to market-intel
+- Daily note: [[market-intel/daily/2026-04-23_top30_recap|2026-04-23_top30_recap]]
+- Event: [[market-intel/events/2026-04-23_제약바이오_모멘텀|2026-04-23_제약바이오_모멘텀]]
+- Event: [[market-intel/events/2026-04-23_반도체소부장_모멘텀|2026-04-23_반도체소부장_모멘텀]]
+- Event: [[market-intel/events/2026-04-23_원전_모멘텀|2026-04-23_원전_모멘텀]]
+- Event: [[market-intel/events/2026-04-23_전력기기_모멘텀|2026-04-23_전력기기_모멘텀]]
+- Event: [[market-intel/events/2026-04-23_코로나_모멘텀|2026-04-23_코로나_모멘텀]]
+
+### Updated
+- Entity: [[market-intel/entities/stocks/코스텍시스|코스텍시스]]
+- Entity: [[market-intel/entities/stocks/바이젠셀|바이젠셀]]
+- Entity: [[market-intel/entities/stocks/사피엔반도체|사피엔반도체]]
+- Entity: [[market-intel/entities/stocks/오가닉티코스메틱|오가닉티코스메틱]]
+- Entity: [[market-intel/entities/stocks/대원전선|대원전선]]
+- Entity: [[market-intel/entities/stocks/피엠티|피엠티]]
+- Entity: [[market-intel/entities/stocks/리센스메디컬|리센스메디컬]]
+- Entity: [[market-intel/entities/stocks/아모그린텍|아모그린텍]]
+- Entity: [[market-intel/entities/stocks/서전기전|서전기전]]
+- Entity: [[market-intel/entities/stocks/보성파워텍|보성파워텍]]
+- Entity: [[market-intel/entities/stocks/라온텍|라온텍]]
+- Entity: [[market-intel/entities/stocks/유투바이오|유투바이오]]
+- Entity: [[market-intel/entities/stocks/가온전선|가온전선]]
+- Entity: [[market-intel/entities/stocks/엘티씨|엘티씨]]
+- Entity: [[market-intel/entities/stocks/삼성제약|삼성제약]]
+- Entity: [[market-intel/entities/stocks/누리플렉스|누리플렉스]]
+- Entity: [[market-intel/entities/stocks/솔루스첨단소재|솔루스첨단소재]]
+- Entity: [[market-intel/entities/stocks/휴온스글로벌|휴온스글로벌]]
+- Entity: [[market-intel/entities/stocks/티움바이오|티움바이오]]
+- Entity: [[market-intel/entities/stocks/싸이버원|싸이버원]]
+- Entity: [[market-intel/entities/stocks/메쥬|메쥬]]
+- Entity: [[market-intel/entities/stocks/케어젠|케어젠]]
+- Entity: [[market-intel/entities/stocks/오르비텍|오르비텍]]
+- Entity: [[market-intel/entities/stocks/에스엔시스|에스엔시스]]
+- Entity: [[market-intel/entities/stocks/OCI|OCI]]
+- Entity: [[market-intel/entities/stocks/태웅|태웅]]
+- Change log: [[MARKET_INTEL_RECENT_CHANGES]]
+
+### What changed semantically
+- validated archive (`2026-04-23.json` / `97db78d9c5a01f4c1b13056d3e90ebe9f386cceaf5610a479aaca5eeb18fc24b`)만 ingest 대상으로 통과시켰다.
+- stock entity 중심으로 누적 히스토리를 업데이트하고, 상세 해석은 theme/event note 쪽에 배치했다.
+- 중복 ingest 방지를 위해 날짜별 hash/state 기록을 남긴다.
 
 ## 2026-04-23 05:56:00 KST — missing evening briefing + next-session prep filled for readiness recovery
 
@@ -1155,7 +1213,7 @@ reviewer: 헤르메스(ㅎㅁ)
 
 <!-- AUTO_CURRENT_STATUS_START -->
 ## Auto current ops status
-- checked_at: 2026-04-23 KST, 목요일 장중
+- checked_at: 2026-04-24 KST, 금요일 장중
 - readiness: 완료 (3/3)
 - recovery_needed: 없음
 - board: [[current-readiness-board|current-readiness-board]]

@@ -636,6 +636,77 @@ def terminology_block() -> str:
 - `준비도`: prep / validated recap / close input 3개 중 몇 개가 exact-date 기준으로 준비됐는지"""
 
 
+def automation_chain_block(state: CurrentState) -> str:
+    archive_exists = state.same_day_archive_path.exists()
+    archive_payload = parse_json_payload(state.same_day_archive_path) if archive_exists else None
+    archive_valid, archive_detail = archive_passes_validation(archive_payload)
+
+    if state.phase == "장후":
+        if archive_exists and archive_valid:
+            source_status = f"`READY` 당일 source archive 확보 — {state.same_day_archive_path.name} validation 통과 ({archive_detail})"
+        elif archive_exists:
+            source_status = f"`RECOVERY_NEEDED` 당일 source archive 복구 필요 — 파일은 있지만 validation 실패 ({archive_detail})"
+        else:
+            source_status = "`RECOVERY_NEEDED` 당일 source archive 미생성 — close 이후 recovery flow가 바로 들어가야 함"
+    else:
+        if archive_exists and archive_valid:
+            source_status = f"`READY` 당일 source archive 조기 확보 — {state.same_day_archive_path.name} validation 통과 ({archive_detail})"
+        elif archive_exists:
+            source_status = f"`WARNING` 당일 source archive 존재하지만 validation 미통과 — {archive_detail}"
+        else:
+            source_status = "`WAITING` 당일 source archive — 장전/장중에는 아직 없어도 정상"
+
+    recap_status = (
+        f"`READY` 직전 장 validated recap — {state.required_recap.slug}"
+        if state.required_recap
+        else f"`BLOCKED` 직전 장 validated recap 없음 — target {state.required_recap_date}_top30_recap"
+    )
+    close_input_status = (
+        f"`READY` 직전 장 close input — {state.required_close_input.slug}"
+        if state.required_close_input
+        else f"`BLOCKED` 직전 장 close input 없음 — target {state.required_close_input_date}_evening-briefing-input"
+    )
+    briefing_status = (
+        f"`READY` final evening briefing output — {state.required_briefing_output.slug}"
+        if state.required_briefing_output
+        else f"`AUTO-FILL TARGET` final evening briefing output 없음 — target {state.required_briefing_output_date}_evening-briefing"
+    )
+    prep_status = (
+        f"`READY` next-session prep — {state.required_prep.slug}"
+        if state.required_prep
+        else f"`AUTO-FILL TARGET` next-session prep 없음 — target {state.required_prep_date}_next-session-prep"
+    )
+
+    if not state.required_close_input:
+        stop_point = "- 현재 막힘: close input이 없으면 evening briefing output / next-session-prep 자동 생성도 이어지지 않는다."
+    elif not state.required_briefing_output:
+        stop_point = "- 현재 막힘: close input은 있지만 final evening briefing output이 비어 있어 output lane이 멈춘 상태다."
+    elif not state.required_prep:
+        stop_point = "- 현재 막힘: 직전 close chain은 있지만 exact-date next-session-prep가 없어 장전 anchor가 비어 있다."
+    else:
+        stop_point = "- 현재 막힘: prior-close -> briefing -> prep 문서 체인은 현재 기준으로 이어져 있다. 남은 불확실성은 same-day source/archive 쪽이다."
+
+    return "\n".join(
+        [
+            "### 자동 체인 개요",
+            "1. `same-day source recovery/watch` — 장마감 전후 archive 확보/복구 감시 (`jmkr-same-day-auto-recovery-close-window`, `jmkr-top30-same-day-late-check-and-ingest`)",
+            "2. `validated recap ingest` — close archive validation 통과 시 exact-date `*_top30_recap` 생성",
+            "3. `evening-briefing-input` — 장마감 입력 레이어 생성 (`local-only-evening-briefing-input`)",
+            "4. `evening briefing output` — input을 decision-oriented output note로 자동 변환 (`market-intel-evening-briefing-auto-create`, 18:50 KST)",
+            "5. `next-session-prep` — 직전 장 문서를 바탕으로 다음 세션 prep 자동 보강 (`market-intel-next-session-prep-auto-create`, 06:05 KST)",
+            "6. `Quartz sync/build` — `sync-market-intel.sh`가 entrypoint/readiness를 다시 계산해 8081에 반영",
+            "",
+            "### 현재 체인 상태",
+            f"- {source_status}",
+            f"- {recap_status}",
+            f"- {close_input_status}",
+            f"- {briefing_status}",
+            f"- {prep_status}",
+            stop_point,
+        ]
+    )
+
+
 def root_markdown(state: CurrentState) -> str:
     runtime_now_html = build_runtime_now_html(state.today_label)
     readiness_text, ready_count, total_count = readiness_summary(state)
@@ -663,6 +734,9 @@ summary: 8081 루트 시작점. 현재 세션에 필요한 문서가 exact-date 
 
 ## 최신 usable 문서
 {render_latest_lines(state)}
+
+## 자동 생성 체인
+{automation_chain_block(state)}
 
 ## 용어 정리
 {terminology_block()}
@@ -704,6 +778,9 @@ summary: 현재 세션 필수 문서가 자동으로 준비됐는지 먼저 확�
 
 ## 최신 usable 문서
 {render_latest_lines(state)}
+
+## 자동 생성 체인
+{automation_chain_block(state)}
 
 ## 왜 이렇게 보나
 - 수동으로 "어제 문서 열어보자"가 아니라, **현재 시점에 필요한 exact-date 문서가 있는지 자동으로 확인**해야 한다.
@@ -843,6 +920,9 @@ summary: 지금 세션 기준으로 필요한 핵심 daily 문서가 자동으�
 
 ## 최신 usable 문서
 {render_latest_lines(state)}
+
+## 자동 생성 체인 / 현재 막힘 위치
+{automation_chain_block(state)}
 
 ## 이 페이지를 어떻게 써야 하나
 - 이 페이지는 **지금 세션에 필요한 문서가 최신인지**를 먼저 확인하는 운영 현황판이다.

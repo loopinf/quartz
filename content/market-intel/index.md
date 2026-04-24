@@ -5,8 +5,8 @@ summary: 현재 세션 필수 문서가 자동으로 준비됐는지 먼저 확�
 
 # Market Intel Home
 
-## 오늘 준비 상태 (<span data-mi-current-label="1" data-mi-current-date="2026-04-23" data-mi-current-phase="장중">2026-04-23 KST, 목요일 장중</span>)
-- 실시간 KST 기준: <span id="market-intel-now-label">2026-04-23 KST, 목요일 장중</span>
+## 오늘 준비 상태 (<span data-mi-current-label="1" data-mi-current-date="2026-04-24" data-mi-current-phase="장중">2026-04-24 KST, 금요일 장중</span>)
+- 실시간 KST 기준: <span id="market-intel-now-label">2026-04-24 KST, 금요일 장중</span>
 <script id="market-intel-now-script">
 (() => {
   const el = document.getElementById('market-intel-now-label');
@@ -26,34 +26,51 @@ summary: 현재 세션 필수 문서가 자동으로 준비됐는지 먼저 확�
   el.textContent = `${take('year')}-${take('month')}-${take('day')} KST, ${take('weekday')} ${phase}`;
 })();
 </script>
-- 현재 세션: `2026-04-23` / `장중`
+- 현재 세션: `2026-04-24` / `장중`
 - 오늘 장전 준비 상태: `완료` = `3 / 3`
 - [진행상황판](/market-intel/current-readiness-board)
 - 최근 변경 로그: [MARKET_INTEL_RECENT_CHANGES](/market-intel/MARKET_INTEL_RECENT_CHANGES)
 
-- `READY` 오늘 세션 prep: [2026-04-23_next-session-prep](/market-intel/daily/2026-04-23_next-session-prep)
-  - 오늘 세션용 prep가 2026-04-23_next-session-prep로 준비되어 있다.
-- `READY` 직전 장 validated recap: [2026-04-22_top30_recap](/market-intel/daily/2026-04-22_top30_recap)
-  - 직전 장 기준 validated recap가 2026-04-22_top30_recap로 준비되어 있다.
-- `READY` 직전 장 close input: [2026-04-22_evening-briefing-input](/market-intel/daily/2026-04-22_evening-briefing-input)
-  - 직전 장 close input이 2026-04-22_evening-briefing-input로 준비되어 있다.
+- `READY` 오늘 세션 prep: [2026-04-24_next-session-prep](/market-intel/daily/2026-04-24_next-session-prep)
+  - 오늘 세션용 prep가 2026-04-24_next-session-prep로 준비되어 있다.
+- `READY` 직전 장 validated recap: [2026-04-23_top30_recap](/market-intel/daily/2026-04-23_top30_recap)
+  - 직전 장 기준 validated recap가 2026-04-23_top30_recap로 준비되어 있다.
+- `READY` 직전 장 close input: [2026-04-23_evening-briefing-input](/market-intel/daily/2026-04-23_evening-briefing-input)
+  - 직전 장 close input이 2026-04-23_evening-briefing-input로 준비되어 있다.
 
 ## 오늘 바로 할 일
 1. [진행상황판에서 exact-date readiness 확인](/market-intel/current-readiness-board)
-2. [오늘 세션 prep 열기](/market-intel/daily/2026-04-23_next-session-prep)
-3. [직전 장 validated recap](/market-intel/daily/2026-04-22_top30_recap)
-4. [직전 장 close input](/market-intel/daily/2026-04-22_evening-briefing-input)
+2. [오늘 세션 prep 열기](/market-intel/daily/2026-04-24_next-session-prep)
+3. [직전 장 validated recap](/market-intel/daily/2026-04-23_top30_recap)
+4. [직전 장 close input](/market-intel/daily/2026-04-23_evening-briefing-input)
 5. [prediction workspace](/market-intel/research/prediction-workspace)
 
 ## recovery-needed 체크
 - recovery-needed 상태 아님
 
 ## 최신 usable 문서
-- 최신 prep: [2026-04-23_next-session-prep](/market-intel/daily/2026-04-23_next-session-prep)
-- 최신 validated recap: [2026-04-22_top30_recap](/market-intel/daily/2026-04-22_top30_recap)
-- 최신 close input: [2026-04-22_evening-briefing-input](/market-intel/daily/2026-04-22_evening-briefing-input)
-- 최신 evening briefing output: [2026-04-22_evening-briefing](/market-intel/daily/2026-04-22_evening-briefing)
-- same-day archive path: `/Users/gbserver/repos/jmkr_kj/data/daily/archive/2026-04-23.json` (missing yet)
+- 최신 prep: [2026-04-24_next-session-prep](/market-intel/daily/2026-04-24_next-session-prep)
+- 최신 validated recap: [2026-04-23_top30_recap](/market-intel/daily/2026-04-23_top30_recap)
+- 최신 close input: [2026-04-23_evening-briefing-input](/market-intel/daily/2026-04-23_evening-briefing-input)
+- 최신 evening briefing output: [2026-04-23_evening-briefing](/market-intel/daily/2026-04-23_evening-briefing)
+- same-day archive path: `/Users/gbserver/repos/jmkr_kj/data/daily/archive/2026-04-24.json` (missing yet)
+
+## 자동 생성 체인
+### 자동 체인 개요
+1. `same-day source recovery/watch` — 장마감 전후 archive 확보/복구 감시 (`jmkr-same-day-auto-recovery-close-window`, `jmkr-top30-same-day-late-check-and-ingest`)
+2. `validated recap ingest` — close archive validation 통과 시 exact-date `*_top30_recap` 생성
+3. `evening-briefing-input` — 장마감 입력 레이어 생성 (`local-only-evening-briefing-input`)
+4. `evening briefing output` — input을 decision-oriented output note로 자동 변환 (`market-intel-evening-briefing-auto-create`, 18:50 KST)
+5. `next-session-prep` — 직전 장 문서를 바탕으로 다음 세션 prep 자동 보강 (`market-intel-next-session-prep-auto-create`, 06:05 KST)
+6. `Quartz sync/build` — `sync-market-intel.sh`가 entrypoint/readiness를 다시 계산해 8081에 반영
+
+### 현재 체인 상태
+- `WAITING` 당일 source archive — 장전/장중에는 아직 없어도 정상
+- `READY` 직전 장 validated recap — 2026-04-23_top30_recap
+- `READY` 직전 장 close input — 2026-04-23_evening-briefing-input
+- `READY` final evening briefing output — 2026-04-23_evening-briefing
+- `READY` next-session prep — 2026-04-24_next-session-prep
+- 현재 막힘: prior-close -> briefing -> prep 문서 체인은 현재 기준으로 이어져 있다. 남은 불확실성은 same-day source/archive 쪽이다.
 
 ## 왜 이렇게 보나
 - 수동으로 "어제 문서 열어보자"가 아니라, **현재 시점에 필요한 exact-date 문서가 있는지 자동으로 확인**해야 한다.
