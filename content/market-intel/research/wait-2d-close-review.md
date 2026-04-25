@@ -50,7 +50,7 @@ time_verification_status: confirmed
 - corrected full-range 기준에서 `wait_2d_close`는 **20d Sharpe 1위**다.
 - raw average return 기준으론 1위가 아니다.
   - `pullback_4pct`: `5.44%`
-  - `pullback_2pct`: `5.00%`
+  - `pullback_2pct`: `5.0%`
   - `same_close`: `4.76%`
   - `wait_1d_close`: `4.61%`
   - `wait_2d_close`: `4.58%`
@@ -109,14 +109,13 @@ flowchart TD
 ## Full-range comparison table (corrected)
 | rule | avail / total | avail rate | 5d avg | 10d avg | 20d avg | 20d win | 20d sharpe | 20d median | MFE20 | MAE20 | new-high-20d |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `same_close` | 29,260 / 29,260 | 100.00% | 1.38% | 2.30% | 4.76% | 56.92% | 3.6086 | 0.35% | 19.44% | -11.03% | 85.93% |
-| `next_open` | 29,257 / 29,260 | 99.99% | 1.02% | 2.01% | 4.55% | 56.80% | 3.6095 | 0.32% | 18.67% | -10.99% | 83.47% |
-| `wait_1d_close` | 29,257 / 29,260 | 99.99% | 1.09% | 2.08% | 4.61% | 57.12% | 3.7779 | 0.37% | 18.72% | -10.89% | 83.47% |
-| `wait_2d_close` | 29,061 / 29,260 | 99.32% | 1.00% | 2.09% | 4.58% | 57.21% | 3.9063 | 0.36% | 18.30% | -10.66% | 82.02% |
-| `wait_3d_close` | 28,866 / 29,260 | 98.65% | 0.92% | 2.05% | 4.48% | 57.02% | 3.8756 | 0.33% | 17.94% | -10.49% | 80.75% |
-| `pullback_2pct` | 23,642 / 29,260 | 80.80% | 1.77% | 3.09% | 5.00% | 52.92% | 3.4390 | 0.94% | 21.06% | -11.70% | 73.49% |
-| `pullback_4pct` | 21,340 / 29,260 | 72.93% | 2.46% | 3.74% | 5.44% | 52.93% | 3.5269 | 0.95% | 22.16% | -11.58% | 65.68% |
-
+| `same_close` | 29,260 / 29,260 | 100.00% | 1.48% | 2.46% | 4.76% | 56.92% | 3.6086 | 0.35% | 19.68% | -11.16% | 85.80% |
+| `next_open` | 29,257 / 29,260 | 99.99% | 1.09% | 2.17% | 4.55% | 56.80% | 3.6095 | 0.32% | 18.87% | -11.15% | 83.29% |
+| `wait_1d_close` | 29,257 / 29,260 | 99.99% | 1.19% | 2.27% | 4.61% | 57.12% | 3.7779 | 0.37% | 18.97% | -11.01% | 83.29% |
+| `wait_2d_close` | 29,061 / 29,260 | 99.32% | 1.09% | 2.30% | 4.58% | 57.21% | 3.9063 | 0.36% | 18.59% | -10.79% | 81.90% |
+| `wait_3d_close` | 28,866 / 29,260 | 98.65% | 1.01% | 2.32% | 4.48% | 57.02% | 3.8756 | 0.33% | 18.32% | -10.63% | 80.67% |
+| `pullback_2pct` | 23,642 / 29,260 | 80.80% | 1.84% | 3.28% | 5.00% | 52.92% | 3.4390 | 0.94% | 21.36% | -11.98% | 73.37% |
+| `pullback_4pct` | 21,340 / 29,260 | 72.93% | 2.46% | 3.90% | 5.44% | 52.93% | 3.5269 | 0.95% | 22.43% | -11.98% | 65.73% |
 ## Visual check
 ### 1) Full-range scorecard
 ![[market-intel/assets/wait-2d-close-fullrange-sharpe-availability.png]]
@@ -144,6 +143,11 @@ Interpretation:
 감사 과정에서 가장 먼저 걸린 이상 신호는 이것이었다.
 - 이전 요약에서 `next_open`과 `wait_1d_close` 결과가 aggregate level에서 사실상 동일했다.
 - 두 rule은 entry price 정의가 다르기 때문에, 완전히 동일하면 먼저 계산 bug를 의심해야 한다.
+- corrected historical rows를 다시 비교하면, **`next_open` vs `wait_1d_close` mismatch event는 총 `28,007`건**이다.
+
+즉 manager 관점에서 이 숫자는 중요하다.
+- “두 rule이 원래부터 같은가?”가 아니라
+- **“원래 같지 않아야 하는데, 예전 집계가 비정상적으로 같아 보였던 것”** 이라는 증거이기 때문이다.
 
 ### Verification check 2: root cause identified in code
 확인 결과, 원인은 `scripts/export_high_signal_entry_outcomes.py`의 `returns_from_entry(...)`였다.
@@ -253,9 +257,11 @@ manager 관점에선 이게 중요하다.
 - `wait_2d_close` vs `next_open`
   - Sharpe delta: `+0.2968`
   - avg delta: `+0.03%p`
+  - availability delta: `-0.67%p`
 - `wait_2d_close` vs `wait_1d_close`
   - Sharpe delta: `+0.1284`
   - avg delta: `-0.03%p`
+  - availability delta: `-0.67%p`
 
 즉 `wait_2d_close`는 corrected data에서도 top-tier이지만,
 **승자독식식으로 과장할 정도의 gap은 아니다.**
@@ -322,6 +328,38 @@ manager는 결국 이걸 묻는다.
 4. stock-level heterogeneity
    - does the edge concentrate in a few names?
    - or is it broadly distributed?
+
+## Automated validator bot
+이 note를 사람이 눈으로만 검토하면 다시 놓치는 부분이 생길 수 있다.
+그래서 리포트 작성 bot와 별도로, **리포트 검증 bot**이 있어야 한다.
+
+현재 검증 스크립트:
+- `scripts/validate_wait_2d_close_report.py`
+
+역할:
+- corrected raw outcome JSON과 recheck summary를 다시 읽는다
+- report 안의 핵심 claim/숫자/bug section/차트 참조를 검증한다
+- 특히 아래를 자동 확인한다
+  - `wait_2d_close` Sharpe claim이 recheck JSON과 일치하는가
+  - `wait_2d_close` count reconciliation row가 최신 corrected counts와 일치하는가
+  - `next_open` vs `wait_1d_close` mismatch count (`28,007`)가 note에 명시돼 있는가
+  - mismatch sample event (`52w_breakout:042700:2026-03-10`) 값이 note에 들어 있는가
+  - required chart assets가 note에 참조되고 실제 파일도 존재하는가
+  - verification provenance script들이 note에 언급돼 있는가
+
+run command:
+```bash
+cd /Users/gbserver/repos/jmkr_kj
+python scripts/validate_wait_2d_close_report.py
+```
+
+expected behavior:
+- exit code `0` → report와 corrected data가 일치
+- exit code `1` → report가 stale/missing/incorrect claim을 포함
+
+manager 관점에선 이게 중요하다.
+- report bot이 실수할 수 있다는 걸 전제로 하고
+- **검증 bot이 숫자와 문구를 다시 잡아줘야 하기 때문**이다.
 
 ## Companion notes
 - sample review: [[market-intel/research/high-signal-entry-backtest-sample|high-signal-entry-backtest-sample]]
