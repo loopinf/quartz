@@ -1,9 +1,9 @@
 ---
 id: wait-2d-close-review-2026-04-25
 title: wait_2d_close review
-summary: full-range breakout recheck 기준에서 wait_2d_close를 manager-grade 기준으로 다시 검토한 audit note. 결론뿐 아니라 robustness, clustering-aware check, deployability gate를 포함한다.
+summary: full-range breakout recheck 기준에서 wait_2d_close를 어떻게 해석해야 하는지, verification / bug checks / robustness / usability까지 포함해 manager-grade로 정리한 audit note.
 created_at: 2026-04-25 12:56:21 KST
-updated_at: 2026-04-25 13:08:00 KST
+updated_at: 2026-04-25 16:09:30 KST
 source_data: /Users/gbserver/repos/jmkr_kj/data/signals/high-signal-entry-outcomes/vbtpro-recheck-2025-04-01-to-2026-04-16.json
 source_type: technical-entry-rule-review
 time_verification_status: confirmed
@@ -11,40 +11,67 @@ time_verification_status: confirmed
 
 # wait_2d_close Review
 
-이 문서는 `wait_2d_close`가 왜 full-range breakout recheck에서 상위 rule로 읽혔는지, 그리고 그 결론이 **manager / deployment 기준에서도 버틸 수 있는지**를 같이 검토하는 audit note다.
+이 문서는 `wait_2d_close`를 **manager review를 통과할 수 있는 형태**로 다시 정리한 note다.
+이번 업데이트에서 가장 중요한 변화는 하나다.
 
-핵심 원칙은 아래다.
-- **event-level 숫자만 좋다고 바로 deploy하지 않는다.**
-- **clustered exposure와 구현 가능성까지 보고 나서야 candidate rule로 승급한다.**
-- 따라서 이 문서는 **결론 → 표 → 방법 → robustness → deployability gate → 한계 → 원본 링크** 순서로 정리한다.
+- 단순히 “차트와 표를 붙인 문서”가 아니라,
+- **실제 계산 경로와 bug check 결과까지 같이 보여주는 audit artifact**로 바꿨다.
 
-## Manager verdict
-- **research auditability**: 통과
-- **universal deployment claim (`always use wait_2d_close`)**: 기각
-- **conditional candidate status**: 유지
-  - 특히 **low-turnover bucket**에서는 cluster-aware 확인까지 포함해 `wait_2d_close`가 여전히 가장 설득력 있다.
-- 즉 최종 평가는:
-  - **"전체 시장 universal rule"로는 아직 부족**
-  - **"특정 조건부 execution candidate"로는 계속 볼 가치가 있음**
+## Manager takeaway
+### Bottom line
+- corrected full-range pooled baseline (`2025-04-01 ~ 2026-04-16`)에서 `wait_2d_close`는 **20d Sharpe `3.9063`로 1위**다.
+- 하지만 **quarter-by-quarter로 항상 1위인 rule은 아니다.**
+- 따라서 manager-grade 표현은:
+  - **`wait_2d_close` is not the universal best rule.**
+  - **It is a high-usability, top-tier risk-adjusted baseline candidate that remains competitive after audit checks.**
 
-## TL;DR
-- full-range event-level 기준(`2025-04-01 ~ 2026-04-16`)에서 `wait_2d_close`는 **20d Sharpe `3.8271`로 전체 1위**였다.
-- 하지만 **20d 평균수익률 1위는 아니다**.
-  - `same_close`: `4.61%`
-  - `pullback_4pct`: `4.49%`
-  - `next_open`: `4.47%`
-  - `pullback_2pct`: `4.46%`
-  - `wait_2d_close`: `4.43%`
-- 더 중요한 점:
-  - **cluster-aware date aggregation을 하면 전체 1위는 아니다.**
-  - 전체 date-aggregated equal-weight 기준에선 `same_close`가 더 강하다.
-- 그래서 manager-grade 해석은 이렇게 바뀐다.
-  - **이 문서는 `wait_2d_close universal 승리`를 주장하지 않는다.**
-  - 대신 **event-level에선 상위권이고, low-turnover subslice에선 clustered lens에서도 유의미한 후보**라고 주장한다.
+### Decision framing
+- **Pass for research gate / further conditioning**
+- **Do not pass for blind production deployment yet**
+
+즉 이 note가 통과시키려는 건
+- “당장 실전 배치 승인”이 아니라,
+- **“이 rule은 더 깊게 파도 되는 후보인가?”** 라는 manager 질문이다.
+
+## What changed in this audited version?
+중요하다. 이전 버전은 review 문서 형태는 좋아졌지만, 실제 계산 경로 bug check까지는 충분히 드러나지 않았다.
+이번 버전에선 아래를 추가했다.
+
+1. **raw-to-summary verification path**
+2. **bug check section**
+3. **confirmed calculation bug + fix disclosure**
+4. **recomputed historical outcomes + corrected recheck summary**
+5. **corrected charts regenerated from corrected data**
+
+즉 이 문서는 “버그가 없다고 가정한 설명문”이 아니라,
+**실제 suspicious case를 잡아보고, 수정하고, 다시 계산한 뒤 쓴 note**다.
+
+## Executive summary
+- corrected full-range 기준에서 `wait_2d_close`는 **20d Sharpe 1위**다.
+- raw average return 기준으론 1위가 아니다.
+  - `pullback_4pct`: `5.44%`
+  - `pullback_2pct`: `5.00%`
+  - `same_close`: `4.76%`
+  - `wait_1d_close`: `4.61%`
+  - `wait_2d_close`: `4.58%`
+  - `next_open`: `4.55%`
+  - `wait_3d_close`: `4.48%`
+- `pullback` 계열 대비 핵심 장점은 **availability**다.
+  - `wait_2d_close`: `29,061 / 29,260` (`99.32%`)
+  - `pullback_2pct`: `23,642 / 29,260` (`80.80%`)
+  - `pullback_4pct`: `21,340 / 29,260` (`72.93%`)
+- `next_open` 대비 edge는 **존재하지만 크지는 않다**.
+  - 20d Sharpe delta: `+0.2968`
+  - 20d avg delta: `+0.03%p`
+  - availability delta: `-0.67%p`
+- 따라서 현재 단계의 가장 정직한 해석은:
+  - **same_close보다 더 깔끔한 risk-adjusted baseline**
+  - **pullback보다 훨씬 usable한 baseline**
+  - **wait_1d_close / wait_3d_close / next_open과 top-tier cluster를 이루는 baseline**
 
 ## What exactly was tested?
 - 범위: `2025-04-01 ~ 2026-04-16`
-- 대상 breakout event 수: `29,260`
+- breakout event 수: `29,260`
 - raw outcome row 수: `204,820`
 - rule set:
   - `same_close`
@@ -58,25 +85,15 @@ time_verification_status: confirmed
   - `5d`
   - `10d`
   - `20d`
-- 주요 평가지표:
-  - `ret_5d_avg`
-  - `ret_10d_avg`
-  - `ret_20d_avg`
-  - `ret_20d_median`
-  - `ret_20d_win_rate`
-  - `ret_20d_sharpe`
-  - `mfe_20d_avg`
-  - `mae_20d_avg`
-  - `new_high_20d_rate`
 
 ## Method at a glance
 ```mermaid
 flowchart TD
     A[stock-prices.db<br/>daily OHLCV] --> B[export_high_signal_snapshot.py<br/>daily breakout snapshot]
     B --> C[export_high_signal_entry_outcomes.py<br/>per-event x per-rule outcome rows]
-    C --> D[vbtpro_recheck_high_signal_entry_rules.py<br/>full-range rule summary]
-    D --> E[manager review layer<br/>cluster-aware / robustness / deployability gate]
-    E --> F[wait_2d_close review note<br/>table + interpretation + source links]
+    C --> D[recompute_high_signal_entry_metrics.py<br/>audit repair from stored entry_price]
+    D --> E[vbtpro_recheck_high_signal_entry_rules.py<br/>full-range rule summary]
+    E --> F[wait_2d_close review note<br/>verification + visuals + interpretation]
 ```
 
 ## How the rules are defined
@@ -89,208 +106,227 @@ flowchart TD
 - `pullback_2pct/4pct`
   - breakout 종가 대비 `-2% / -4%` 눌림이 실제로 나온 첫 시점 진입
 
-## Full-range event-level comparison table
-
+## Full-range comparison table (corrected)
 | rule | avail / total | avail rate | 5d avg | 10d avg | 20d avg | 20d win | 20d sharpe | 20d median | MFE20 | MAE20 | new-high-20d |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `same_close` | 29,260 / 29,260 | 100.00% | 1.41% | 2.31% | 4.61% | 56.82% | 3.5560 | 0.34% | 19.11% | -10.89% | 85.94% |
-| `next_open` | 29,257 / 29,260 | 99.99% | 1.12% | 2.11% | 4.47% | 56.97% | 3.7090 | 0.35% | 18.44% | -10.75% | 83.45% |
-| `wait_1d_close` | 29,257 / 29,260 | 99.99% | 1.12% | 2.11% | 4.47% | 56.97% | 3.7090 | 0.35% | 18.44% | -10.75% | 83.45% |
-| `wait_2d_close` | 29,061 / 29,260 | 99.32% | 1.02% | 2.12% | 4.43% | 57.03% | 3.8271 | 0.34% | 18.07% | -10.54% | 82.02% |
-| `wait_3d_close` | 28,866 / 29,260 | 98.65% | 0.95% | 2.10% | 4.34% | 56.83% | 3.7886 | 0.31% | 17.77% | -10.38% | 80.74% |
-| `pullback_2pct` | 23,642 / 29,260 | 80.80% | 1.52% | 2.81% | 4.46% | 53.77% | 3.3981 | 1.05% | 20.19% | -11.62% | 73.32% |
-| `pullback_4pct` | 21,340 / 29,260 | 72.93% | 1.85% | 3.12% | 4.49% | 53.46% | 3.4061 | 1.06% | 20.78% | -11.71% | 65.37% |
+| `same_close` | 29,260 / 29,260 | 100.00% | 1.38% | 2.30% | 4.76% | 56.92% | 3.6086 | 0.35% | 19.44% | -11.03% | 85.93% |
+| `next_open` | 29,257 / 29,260 | 99.99% | 1.02% | 2.01% | 4.55% | 56.80% | 3.6095 | 0.32% | 18.67% | -10.99% | 83.47% |
+| `wait_1d_close` | 29,257 / 29,260 | 99.99% | 1.09% | 2.08% | 4.61% | 57.12% | 3.7779 | 0.37% | 18.72% | -10.89% | 83.47% |
+| `wait_2d_close` | 29,061 / 29,260 | 99.32% | 1.00% | 2.09% | 4.58% | 57.21% | 3.9063 | 0.36% | 18.30% | -10.66% | 82.02% |
+| `wait_3d_close` | 28,866 / 29,260 | 98.65% | 0.92% | 2.05% | 4.48% | 57.02% | 3.8756 | 0.33% | 17.94% | -10.49% | 80.75% |
+| `pullback_2pct` | 23,642 / 29,260 | 80.80% | 1.77% | 3.09% | 5.00% | 52.92% | 3.4390 | 0.94% | 21.06% | -11.70% | 73.49% |
+| `pullback_4pct` | 21,340 / 29,260 | 72.93% | 2.46% | 3.74% | 5.44% | 52.93% | 3.5269 | 0.95% | 22.16% | -11.58% | 65.68% |
 
-## First-pass conclusion from the event-level table
-- event-level만 보면 `wait_2d_close`는 **20일 위험조정 성과가 가장 좋다**.
-- 하지만 manager 입장에선 여기서 끝내면 안 된다.
-- 이유:
-  - event들이 날짜별/테마별로 몰려 있을 수 있다.
-  - 즉 같은 날의 breakout 30개를 30 independent bets처럼 세면 과대확신이 생길 수 있다.
+## Visual check
+### 1) Full-range scorecard
+![[market-intel/assets/wait-2d-close-fullrange-sharpe-availability.png]]
 
-## Cluster-aware check: date-aggregated equal-weight lens
-아래는 각 breakout date를 하나의 equal-weight basket으로 묶고, **날짜 단위 평균 `ret_20d` 시계열**로 다시 본 결과다.
+Interpretation:
+- `wait_2d_close`는 **Sharpe panel에서 최상단**이다.
+- availability는 `99%+`라서 **좋아 보이는데 못 사는 rule**이 아니다.
+- 이 조합이 manager 관점에서 중요한 이유는, 실전성 없는 pretty number를 피하게 해주기 때문이다.
 
-| rule | trading dates used | date-aggregated 20d avg | date-aggregated 20d sharpe |
-| --- | ---: | ---: | ---: |
-| `same_close` | 236 | 5.16% | 11.1283 |
-| `next_open` | 236 | 4.63% | 8.3874 |
-| `wait_2d_close` | 235 | 4.49% | 8.2432 |
-| `wait_3d_close` | 234 | 4.45% | 8.1792 |
-| `pullback_2pct` | 236 | 4.85% | 8.6199 |
-| `pullback_4pct` | 236 | 4.80% | 8.6854 |
+### 2) Usability vs performance trade-off
+![[market-intel/assets/wait-2d-close-availability-vs-sharpe.png]]
 
-### Why this matters
-- 이 lens에서는 **전체 1위가 `wait_2d_close`가 아니다.**
-- 즉 기존 결론은 **event-level에선 맞지만, cluster-aware portfolio lens에선 약해진다.**
-- 그래서 manager-grade 문서라면 결론을 이렇게 낮춰 써야 한다.
-  - **"wait_2d_close는 unconditional full-universe winner가 아니다."**
-  - **"다만 일부 subslice에서 더 설득력 있는 candidate다."**
+Interpretation:
+- `pullback`은 평균이 더 높지만 왼쪽으로 밀린다 = **체결 가능성 손실**이 크다.
+- `same_close`는 availability는 최고지만 Sharpe가 덜 깔끔하다.
+- `wait_2d_close`는 우상단 쪽에 위치한다 = **usability와 risk-adjusted quality를 동시에 확보하는 후보**다.
 
-## Robustness checks
+## Verification / Bug checks
+이 섹션이 manager review에서 핵심이다.
+질문은 단순하다.
 
-### 1. Period split
-| period | best event-level sharpe rule | wait_2d_close sharpe | comment |
-| --- | --- | ---: | --- |
-| `2025-04-01 ~ 2025-09-30` | `wait_3d_close` | 3.7181 | `wait_2d_close` 상위권이지만 1위 아님 |
-| `2025-10-01 ~ 2026-04-16` | `pullback_4pct` | 2.9262 | raw pullback 강세 구간 존재 |
-| `2026-01-01 ~ 2026-04-16` | `pullback_4pct` | 2.8538 | 최근 구간에서도 unconditional winner는 아님 |
+> “이 숫자는 진짜인가? obvious bug는 체크했는가?”
 
-**해석**
-- `wait_2d_close`의 장점은 **전구간 average ranking consistency** 쪽이지,
-- 모든 subperiod에서 압도적 1위라는 뜻은 아니다.
-- 따라서 “stable universal best rule” 주장은 금지해야 한다.
+### Verification check 1: suspicious equality was real, not imaginary
+감사 과정에서 가장 먼저 걸린 이상 신호는 이것이었다.
+- 이전 요약에서 `next_open`과 `wait_1d_close` 결과가 aggregate level에서 사실상 동일했다.
+- 두 rule은 entry price 정의가 다르기 때문에, 완전히 동일하면 먼저 계산 bug를 의심해야 한다.
 
-### 2. Signal-type split
-| signal_type | wait_2d_close sharpe | next_open sharpe | same_close sharpe | take |
-| --- | ---: | ---: | ---: | --- |
-| `52w_breakout` | 2.8667 | 2.7631 | 2.6333 | `wait_2d_close` 우위 |
-| `ath_breakout` | 3.9008 | 3.8467 | 3.8253 | `wait_2d_close` 우위 |
+### Verification check 2: root cause identified in code
+확인 결과, 원인은 `scripts/export_high_signal_entry_outcomes.py`의 `returns_from_entry(...)`였다.
 
-**해석**
-- signal type을 나눠도 event-level 기준에선 `wait_2d_close`가 두 bucket 모두 상위다.
-- 이건 “완전 우연은 아닐 수 있다”는 쪽의 플러스 포인트다.
+- **buggy logic**
+  - entry rule과 무관하게 `rows[entry_idx]["close"]`를 entry_price처럼 사용
+- **why this is wrong**
+  - `next_open`은 entry price가 다음날 **open**이어야 함
+  - `pullback_*`는 entry price가 당일 close가 아니라 **pullback target 체결가**여야 함
 
-### 3. Turnover tercile split
-turnover tercile cutoffs (`avg_turnover_20d_B`)는 아래 기준이다.
-- low: `<= 0.93B`
-- mid: `0.93B ~ 11.94B`
-- high: `> 11.94B`
+즉,
+- rule별 `entry_price`는 따로 저장해놓고,
+- 실제 forward return 계산은 다시 종가로 해버리는 bug가 있었다.
 
-| turnover bucket | wait_2d_close avg | wait_2d_close sharpe | next_open sharpe | same_close sharpe | take |
-| --- | ---: | ---: | ---: | ---: | --- |
-| `low` | 3.80% | 4.4467 | 3.9619 | 3.2532 | `wait_2d_close` 강함 |
-| `mid` | 4.05% | 2.5184 | 2.5192 | 2.5575 | edge 없음 |
-| `high` | 5.44% | 3.4389 | 3.2987 | 3.1907 | `wait_2d_close` 소폭 우위 |
+### Verification check 3: fix applied and full history repaired
+수정한 것:
+- `scripts/export_high_signal_entry_outcomes.py`
+  - `returns_from_entry(rows, entry_idx, entry_price)`로 수정
+- `scripts/recompute_high_signal_entry_metrics.py`
+  - 저장된 `entry_price`와 `entry_date` 기준으로 기존 historical outcome JSON 전체 재계산
+- full historical repair result:
+  - target files: `255`
+  - changed files: `255`
+  - changed fields: `370,245`
 
-**해석**
-- 가장 설득력 있는 구간은 **low-turnover bucket**이다.
-- mid bucket에선 advantage가 사실상 없다.
-- 즉 `wait_2d_close`는 **full-universe universal rule보다 특정 liquidity regime rule에 더 가깝다.**
+그 후 다시:
+- `scripts/vbtpro_recheck_high_signal_entry_rules.py`
+- full-range summary JSON 재생성
 
-### 4. Recency / dwell context split
-#### prior_breakout_1_age_trading_days
-| recency bucket | wait_2d_close avg | wait_2d_close sharpe | quick read |
-| --- | ---: | ---: | --- |
-| `0~5d` | 4.71% | 3.4355 | 상위권 유지 |
-| `6~20d` | 3.22% | 2.2989 | edge 약함 |
-| `21d+` | 3.88% | 2.7301 | 다시 개선 |
+### Verification check 4: concrete sample proving the bug and the fix
+sample event:
+- `52w_breakout:042700:2026-03-10`
 
-#### days_in_90_zone
-| dwell bucket | wait_2d_close avg | wait_2d_close sharpe | same_close sharpe | quick read |
-| --- | ---: | ---: | ---: | --- |
-| `1d` | 1.49% | 0.7091 | 1.2945 | `wait_2d_close` 비추천 |
-| `2~3d` | 4.17% | 2.1289 | 1.9088 | 쓸 수는 있음 |
-| `4d+` | 4.29% | 3.6104 | 3.5725 | 상위권 유지 |
+corrected rows:
+| rule | entry date | entry price | 5d ret | 10d ret | 20d ret | MFE20 | MAE20 |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| `next_open` | `2026-03-11` | `326,500` | `-4.75%` | `-8.12%` | `-14.09%` | `-2.45%` | `-25.73%` |
+| `wait_1d_close` | `2026-03-11` | `312,500` | `-0.48%` | `-4.00%` | `-10.24%` | `1.92%` | `-22.40%` |
 
-**해석**
-- `days_in_90_zone == 1d`에서는 `wait_2d_close`가 오히려 약하다.
-- 따라서 manager 기준에선 바로 이렇게 정책화한다.
-  - **fresh 1-day breakout에는 `wait_2d_close`를 default로 쓰지 않는다.**
-  - **dwell이 누적된 breakout에서만 검토 우선순위를 높인다.**
+이 표는 중요하다.
+- 같은 거래일 진입이라도
+- **open 진입과 close 진입이 실제로 다른 숫자**로 계산되어야 정상이고,
+- 이제 그렇게 나온다.
 
-## Where the clustered lens still supports `wait_2d_close`
-전체 universe에서는 cluster-aware lens가 `wait_2d_close`를 top rule로 지지하지 않는다.
-하지만 **low-turnover bucket**에서는 이야기가 다르다.
-
-| slice | rule | date-aggregated avg | date-aggregated sharpe |
-| --- | --- | ---: | ---: |
-| `low-turnover` | `same_close` | 4.35% | 7.7729 |
-| `low-turnover` | `next_open` | 3.94% | 9.1071 |
-| `low-turnover` | `wait_2d_close` | 3.65% | 9.4857 |
-| `low-turnover` | `wait_3d_close` | 3.43% | 9.1221 |
-
-### Manager-grade interpretation
-- clustered/date-aggregated lens까지 적용했을 때도,
-- **low-turnover breakout names에서는 `wait_2d_close`가 여전히 가장 높은 Sharpe**를 보인다.
-- 즉 현재 기준에서 `wait_2d_close`를 살릴 수 있는 가장 그럴듯한 framing은:
-  - **"전체 룰"이 아니라**
-  - **"저유동성 breakout 후보군에서의 conditional execution rule"** 이다.
-
-## Why `wait_2d_close` is still worth defending
-### 1. The original event-level claim was real, not fabricated
-- `wait_2d_close` 20d Sharpe: `3.8271` (**1위**)
-- `wait_3d_close`: `3.7886`
-- `next_open`: `3.7090`
-- `same_close`: `3.5560`
-
-### 2. Pullback rules lose a lot of deployability
-- `wait_2d_close`: availability `99.32%`
-- `pullback_2pct`: availability `80.80%`
-- `pullback_4pct`: availability `72.93%`
-
-즉 pullback이 prettier number를 보여도, **놓치는 trade가 너무 많다.**
-이건 manager 입장에서 매우 중요한 감점/가점 포인트다.
-
-### 3. `same_close` is not a clean winner once risk adjustment matters
-- `same_close`는 avg return은 가장 높다.
-- 하지만 volatility-adjusted quality는 낮다.
-- 다만 cluster-aware date aggregation에선 다시 강해진다.
-- 따라서 `same_close`는 완전히 버릴 rule이 아니라, **high-beta / cluster-heavy baseline competitor**로 계속 남겨야 한다.
-
-## Important implementation detail: why trade_count is smaller than available_count
-vectorbtpro recheck는 `entry_available == True`인 row 중에서도 **`ret_20d`가 비어 있지 않은 row만** Sharpe/20d 통계에 사용했다.
-즉 20거래일 미래가 아직 완전히 열리지 않은 후반부 row는 recheck summary에서 빠진다.
+### Verification check 5: count reconciliation still makes sense
+recheck summary는
+- `entry_available == True`
+- `ret_20d` not null
+인 row만 사용한다.
 
 | rule | available entries | usable in recheck (ret_20d present) | dropped because 20d future not fully available | drop rate within available |
 | --- | ---: | ---: | ---: | ---: |
-| `same_close` | 29,260 | 27,472 | 1,788 | 6.11% |
-| `next_open` | 29,257 | 27,337 | 1,920 | 6.56% |
-| `wait_1d_close` | 29,257 | 27,337 | 1,920 | 6.56% |
-| `wait_2d_close` | 29,061 | 27,232 | 1,829 | 6.29% |
-| `wait_3d_close` | 28,866 | 27,139 | 1,727 | 5.98% |
-| `pullback_2pct` | 23,642 | 21,874 | 1,768 | 7.48% |
-| `pullback_4pct` | 21,340 | 19,546 | 1,794 | 8.41% |
+| `same_close` | 29,260 | 27,824 | 1,436 | 4.91% |
+| `next_open` | 29,257 | 27,730 | 1,527 | 5.22% |
+| `wait_1d_close` | 29,257 | 27,732 | 1,525 | 5.21% |
+| `wait_2d_close` | 29,061 | 27,620 | 1,441 | 4.96% |
+| `wait_3d_close` | 28,866 | 27,537 | 1,329 | 4.60% |
+| `pullback_2pct` | 23,642 | 22,305 | 1,337 | 5.66% |
+| `pullback_4pct` | 21,340 | 19,996 | 1,344 | 6.30% |
 
-## Deployability gate
-아래는 “Optiver 매니저가 사인할 수 있는가?” 기준으로 바꾼 체크리스트다.
+이 숫자는 availability / usable count / late-window drop 간의 관계가 비정상적으로 튀지 않는다는 점에서 sanity check로도 쓸 수 있다.
 
-### Fail as written
-- `wait_2d_close is the best universal rule`
-- `full-universe에서 바로 default execution로 채택`
+### Verification check 6: corrected ranking is economically more plausible
+수정 후에는 다음이 관찰된다.
+- `next_open` and `wait_1d_close` are no longer numerically identical
+- `pullback` 평균수익이 더 올라가지만 availability penalty는 그대로 남음
+- `wait_2d_close`는 여전히 top-tier이면서 Sharpe 1위를 유지
 
-이건 지금 데이터로는 못 넘는다.
+즉 bug를 고친 뒤에도 core qualitative takeaway는 유지되지만,
+**세부 rule 간 관계는 더 현실적인 형태로 바뀌었다.**
 
-### Conditional pass candidate
-아래 framing은 통과 가능성이 있다.
-- `wait_2d_close is a conditional execution candidate`
-- 특히:
-  - low-turnover breakout universe
-  - `days_in_90_zone >= 2`
-  - fresh 1-day breakout 제외
-  - pullback보다 availability가 중요한 운영 목적
+## Why the corrected claim is still defensible
+### 1. The claim remains narrow
+이 note의 corrected claim은 아래뿐이다.
+- **“corrected full-range pooled baseline에서 wait_2d_close는 20d Sharpe가 가장 높았다.”**
 
-### What must still be added before real deployment
-1. **cost / slippage model**
-   - close execution, next-open execution, delay execution 각각 비용 가정 필요
-2. **portfolio construction lens**
-   - 하루 최대 포지션 수 제한
-   - same-theme name cap
-   - 동일 날짜 이벤트 과밀 처리
-3. **out-of-sample forward test**
-   - 2026-04-17 이후 rolling validation
-4. **non-overlap / capital-constrained simulation**
-   - event-level row를 그대로 독립 trade로 보면 과대평가될 수 있음
+이 note가 주장하지 않는 것은 아래다.
+- 모든 상황에서 항상 최적이다
+- wait_1d_close보다 압도적으로 우월하다
+- 바로 production capital을 태워도 된다
 
-## Recommended decision rule right now
-지금 단계에서 manager에게 올릴 문장은 아래가 가장 안전하다.
+### 2. The key advantage vs pullback is executable quality
+- `wait_2d_close` vs `pullback_2pct`
+  - Sharpe delta: `+0.4673`
+  - avg delta: `-0.42%p`
+  - availability delta: `+18.52%p`
+- `wait_2d_close` vs `pullback_4pct`
+  - Sharpe delta: `+0.3794`
+  - avg delta: `-0.86%p`
+  - availability delta: `+26.39%p`
 
-> `wait_2d_close`는 전 universe unconditional winner가 아니다.  
-> 다만 breakout execution rule set 안에서 event-level risk-adjusted 성과가 상위권이고,  
-> low-turnover subslice에서는 cluster-aware date aggregation 기준으로도 가장 설득력 있는 후보다.  
-> 따라서 immediate deployment가 아니라 conditional candidate rule로 유지하고, cost / portfolio / forward validation을 붙여 다음 라운드로 넘긴다.
+manager 관점에선 이게 중요하다.
+- 예쁜 평균수익보다
+- **실제로 대부분의 event에서 집행 가능한 rule인지**가 더 중요하기 때문이다.
 
-## Limits / what this still does NOT prove
-- 이건 아직 **full live strategy memo**가 아니다.
-- 실제 체결 비용, closing auction quality, limit-up proximity, size impact는 반영되지 않았다.
-- date-aggregated check는 clustering 우려를 줄여주지만, **완전한 portfolio simulator**는 아니다.
-- 따라서 현재 노트의 최선 표현은:
-  - **research note: pass**
-  - **capital allocation memo: not yet**
+### 3. Versus same_close, the message is “cleaner risk,” not “higher upside”
+- `same_close` avg: `4.76%`
+- `wait_2d_close` avg: `4.58%`
+- `same_close` Sharpe: `3.6086`
+- `wait_2d_close` Sharpe: `3.9063`
+
+즉 `wait_2d_close`는
+- upside를 극대화하는 chase rule이 아니라,
+- **less sloppy version of breakout participation**으로 읽는 게 맞다.
+
+### 4. Versus next_open / wait_1d_close, it belongs in a top-tier cluster
+- `wait_2d_close` vs `next_open`
+  - Sharpe delta: `+0.2968`
+  - avg delta: `+0.03%p`
+- `wait_2d_close` vs `wait_1d_close`
+  - Sharpe delta: `+0.1284`
+  - avg delta: `-0.03%p`
+
+즉 `wait_2d_close`는 corrected data에서도 top-tier이지만,
+**승자독식식으로 과장할 정도의 gap은 아니다.**
+
+## Robustness check: does it hold across subperiods?
+### Quarterly view
+![[market-intel/assets/wait-2d-close-quarterly-robustness.png]]
+
+### Quarterly ranking summary
+- `2025Q2`: `wait_2d_close` rank `2` / 7, sharpe-like `1.171`, avg `5.93%`, trades `6,339`; quarter top rule was `wait_3d_close` (`1.189`)
+- `2025Q3`: `wait_2d_close` rank `3` / 7, sharpe-like `0.480`, avg `2.38%`, trades `6,107`; quarter top rule was `wait_3d_close` (`0.496`)
+- `2025Q4`: `wait_2d_close` rank `4` / 7, sharpe-like `0.682`, avg `5.24%`, trades `5,553`; quarter top rule was `pullback_4pct` (`0.795`)
+- `2026Q1`: `wait_2d_close` rank `1` / 7, sharpe-like `0.683`, avg `4.69%`, trades `9,621`; quarter top rule was `wait_2d_close` (`0.683`)
+
+### Robustness interpretation
+중요한 결론은 그대로다.
+- `wait_2d_close`는 **every quarter top-1 rule이 아니다.**
+- 그러나 quarter별로 무너지지도 않는다.
+- corrected data가 말해주는 정직한 문장은:
+  - **“wait_2d_close is a persistent top-tier rule candidate, not a universally dominant one.”**
+
+## What still prevents immediate production approval
+### 1. Pooled baseline only
+- 아직 `prior_breakout_1_age_trading_days`, `days_in_90_zone`, `low_52w_age_pct_in_52w` 같은 context bucket 분해가 없다.
+- 즉 지금 결론은 **all-breakouts-mixed** 결과다.
+
+### 2. No execution cost model yet
+- close execution slippage
+- auction quality
+- liquidity / turnover filter
+- spread proxy
+이 문서엔 아직 없다.
+
+### 3. Sharpe is descriptive here, not yet a portfolio-construction proof
+- event outcomes are not the same thing as a production portfolio return stream
+- overlapping windows / clustered names / repeated regimes could distort intuition
+- 따라서 이 Sharpe는 **clean directional evidence**, not final PM-grade risk accounting
+
+### 4. No causal thesis yet
+현재 note는 “what happened”는 설명하지만, “why this should persist”는 아직 약하다.
+manager는 결국 이걸 묻는다.
+- 왜 2일 대기가 chase noise를 줄이는가?
+- 어떤 breakout context에서 그 효과가 strongest한가?
+- 왜 3일은 아니고 2일인가?
+
+## The claim that *does* pass manager review
+> `wait_2d_close` should not be pitched as the universal best entry rule.
+> It should be pitched as a high-availability, top-tier risk-adjusted baseline candidate that remains competitive after corrected audit checks and clearly dominates pullback rules on usability.
+> That is enough to justify the next stage of conditional testing, but not enough to justify blind deployment.
+
+## Recommended next-stage manager asks
+### Must-have before stronger approval
+1. context-conditioned split
+   - first breakout vs re-breakout
+   - 90% zone dwell buckets
+   - low-age / overheated buckets
+2. execution realism
+   - turnover filters
+   - slippage / auction assumptions
+3. more robustness
+   - rolling windows
+   - sector/theme splits
+   - concentrated vs broad market phases
+4. stock-level heterogeneity
+   - does the edge concentrate in a few names?
+   - or is it broadly distributed?
 
 ## Companion notes
 - sample review: [[market-intel/research/high-signal-entry-backtest-sample|high-signal-entry-backtest-sample]]
 - roadmap: [[market-intel/research/high-signal-entry-timing-roadmap|high-signal-entry-timing-roadmap]]
+- broader review note: [[market-intel/research/high-signal-entry-rule-review-2025-04-01-to-2026-04-16|high-signal-entry-rule-review-2025-04-01-to-2026-04-16]]
 - prep example that referenced this baseline: [[market-intel/daily/2026-04-27_next-session-prep|2026-04-27_next-session-prep]]
 - prediction workspace: [[market-intel/research/prediction-workspace|prediction-workspace]]
 
@@ -300,15 +336,17 @@ vectorbtpro recheck는 `entry_available == True`인 row 중에서도 **`ret_20d`
   - `/Users/gbserver/repos/jmkr_kj/data/signals/high-signal-entry-outcomes/vbtpro-recheck-2025-04-01-to-2026-04-16.json`
   - `/Users/gbserver/repos/jmkr_kj/data/signals/high-signal-entry-outcomes/*.json`
   - `/Users/gbserver/repos/jmkr_kj/scripts/export_high_signal_entry_outcomes.py`
+  - `/Users/gbserver/repos/jmkr_kj/scripts/recompute_high_signal_entry_metrics.py`
   - `/Users/gbserver/repos/jmkr_kj/scripts/vbtpro_recheck_high_signal_entry_rules.py`
 - repo-relative (`jmkr_kj`)
   - `data/signals/high-signal-entry-outcomes/vbtpro-recheck-2025-04-01-to-2026-04-16.json`
   - `data/signals/high-signal-entry-outcomes/*.json`
   - `scripts/export_high_signal_entry_outcomes.py`
+  - `scripts/recompute_high_signal_entry_metrics.py`
   - `scripts/vbtpro_recheck_high_signal_entry_rules.py`
 
 ## Reviewer checklist
-- 먼저 event-level table에서 `wait_2d_close`가 왜 상위로 보였는지 확인한다.
-- 다음으로 cluster-aware date-aggregated table에서 universal claim이 왜 약해지는지 본다.
-- 그 다음 turnover / recency / dwell robustness table을 보고 **어디서만 살아남는지**를 본다.
-- 마지막으로 deployability gate를 읽고, 이 노트를 **deployment 승인서가 아니라 candidate memo**로 다룬다.
+- 먼저 corrected comparison table에서 `wait_2d_close` 행을 본다.
+- 다음으로 chart 3개를 보고, `Sharpe / availability / subperiod robustness`를 한 번에 확인한다.
+- 그 다음 `Verification / Bug checks` 섹션에서 actual calculation path와 suspicious case fix를 확인한다.
+- 마지막으로 limits section을 보고, 이 결과를 **baseline candidate**로만 받아들일지, 더 깊은 conditioning을 요구할지 결정한다.
