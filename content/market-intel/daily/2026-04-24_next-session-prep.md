@@ -2,7 +2,7 @@
 id: next-session-prep-2026-04-24
 note_type: next_session_prep
 created_at: 2026-04-24 12:33:17 KST
-updated_at: 2026-04-24 12:33:17 KST
+updated_at: 2026-04-25 12:54:45 KST
 session_date: 2026-04-24
 source_note: 2026-04-23_top30_recap
 supporting_notes: ["2026-04-23_evening-briefing-input", "2026-04-23_evening-briefing", "2026-04-23_top30_recap", "2026-04-22_top30_recap", "2026-04-21_top30_recap", "2026-04-20_top30_recap", "2026-04-23_제약바이오_모멘텀", "2026-04-23_반도체소부장_모멘텀", "2026-04-23_원전_모멘텀", "2026-04-23_전력기기_모멘텀", "2026-04-23_코로나_모멘텀"]
@@ -85,18 +85,34 @@ same_day_intraday_excluded: true
 - 즉 이 섹션은 단순 참고가 아니라 carry-over 후보 중 기술적으로 받쳐주는 이름을 장전 전에 걸러내는 층이다.
 
 ## Conditional probability / entry-rule summary
-- full-range breakout baseline (2025-04-01 ~ 2026-04-16, vectorbtpro recheck)
-  - `wait_2d_close`: 20d avg `4.43%`, 10d avg `2.12%`, 20d win `0.5703`
-  - `wait_3d_close`: 20d avg `4.34%`, 10d avg `2.1%`, 20d win `0.5683`
-  - `next_open`: 20d avg `4.47%`, 10d avg `2.11%`, 20d win `0.5697`
-- baseline 해석: 전구간 breakout backtest에선 `wait_2d_close / wait_3d_close / next_open`이 Sharpe 기준 상위권이고, `pullback` 계열은 평균 수익은 강하지만 available 비율을 같이 봐야 한다.
+- 이 섹션의 상세 근거/방법/전체 비교표는 [[market-intel/research/high-signal-entry-rule-review-2025-04-01-to-2026-04-16|High Signal Entry Rule Review (2025-04-01 ~ 2026-04-16)]]에서 바로 확인한다.
+- 아래는 prep용 operator summary만 남긴다. 결론만 단독으로 읽지 말고, review note의 방법과 표를 같이 본다.
+
+### Full-range breakout baseline (prep용 축약표)
+| rule | available rate | trades used | 20d avg | 20d win | 20d sharpe |
+|---|---:|---:|---:|---:|---:|
+| `wait_2d_close` | 99.3% | 27,232 | 4.43% | 0.5703 | 3.8271 |
+| `wait_3d_close` | 98.7% | 27,139 | 4.34% | 0.5683 | 3.7886 |
+| `next_open` | 100.0% | 27,337 | 4.47% | 0.5697 | 3.7090 |
+| `wait_1d_close` | 100.0% | 27,337 | 4.47% | 0.5697 | 3.7090 |
+| `same_close` | 100.0% | 27,472 | 4.61% | 0.5682 | 3.5560 |
+| `pullback_4pct` | 72.9% | 19,546 | 4.49% | 0.5346 | 3.4061 |
+| `pullback_2pct` | 80.8% | 21,874 | 4.46% | 0.5377 | 3.3981 |
+
+### baseline 해석
+- `wait_2d_close`는 **20d Sharpe 기준 1위**다. 즉, 이 범위에선 risk-adjusted 성과가 가장 좋았다.
+- 하지만 **20d average return 최고는 `same_close`**다. 그래서 `wait_2d_close`를 "무조건 최고"라고 읽으면 안 된다.
+- `pullback` 계열은 평균/중앙값이 좋아 보여도 available rate가 낮아서 miss-trade bias를 같이 봐야 한다.
+- 즉 이 표는 **장전 검토 순서**를 잡는 데 쓰는 것이지, 단독 매수 규칙 선언문이 아니다.
 
 ### 현재 prep 종목에 대한 lookup
 - `대원전선`: stock-specific 표본이 부족해서 global breakout baseline을 우선 참조해야 한다.
 - `OCI`: stock-specific breakout history 기준 우세 rule → `pullback_4pct`(20d avg 16.06%, avail 11/14), `wait_3d_close`(20d avg 14.34%, avail 11/14)
 - `가온전선`: stock-specific 표본이 부족해서 global breakout baseline을 우선 참조해야 한다.
 - `엘티씨`: stock-specific breakout history 기준 우세 rule → `pullback_4pct`(20d avg 2.48%, avail 38/44), `pullback_2pct`(20d avg 1.4%, avail 38/44)
-- `코스텍시스`: stock-specific breakout history 기준 우세 rule → `wait_2d_close`(20d avg 22.0%, avail 14/16), `pullback_2pct`(20d avg 21.84%, avail 14/16)
+- `코스텍시스`: stock-specific breakout history 기준 우세 rule → `wait_2d_close`(20d avg 22.0%, avail 14/16)
+  - 보조 후보: `pullback_2pct`(20d avg 21.84%, avail 14/16)
+  - 근거 리뷰: [[market-intel/research/high-signal-entry-rule-review-2025-04-01-to-2026-04-16|global rule review]]
 - `피엠티`: stock-specific breakout history 기준 우세 rule → `next_open`(20d avg 2.44%, avail 7/8), `wait_1d_close`(20d avg 2.44%, avail 7/8)
 - `삼성제약`: stock-specific 표본이 부족해서 global breakout baseline을 우선 참조해야 한다.
 - `보성파워텍`: stock-specific breakout history 기준 우세 rule → `same_close`(20d avg 18.05%, avail 27/27), `pullback_2pct`(20d avg 17.45%, avail 26/27)
