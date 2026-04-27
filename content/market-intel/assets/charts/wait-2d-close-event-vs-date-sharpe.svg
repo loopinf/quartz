@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="420">
+<rect width="100%" height="100%" fill="white"/>
+<text x="490.0" y="28" text-anchor="middle" font-size="20" font-family="Arial">20d Sharpe: Event-level vs Date-aggregated</text>
+<line x1="70" y1="55" x2="70" y2="340" stroke="black"/>
+<line x1="70" y1="340" x2="950" y2="340" stroke="black"/>
+<line x1="66" y1="340.0" x2="950" y2="340.0" stroke="#e5e5e5"/>
+<text x="62" y="344.0" text-anchor="end" font-size="11" font-family="Arial">0.0</text>
+<line x1="66" y1="283.0" x2="950" y2="283.0" stroke="#e5e5e5"/>
+<text x="62" y="287.0" text-anchor="end" font-size="11" font-family="Arial">2.2</text>
+<line x1="66" y1="226.0" x2="950" y2="226.0" stroke="#e5e5e5"/>
+<text x="62" y="230.0" text-anchor="end" font-size="11" font-family="Arial">4.5</text>
+<line x1="66" y1="168.99999999999997" x2="950" y2="168.99999999999997" stroke="#e5e5e5"/>
+<text x="62" y="172.99999999999997" text-anchor="end" font-size="11" font-family="Arial">6.7</text>
+<line x1="66" y1="112.0" x2="950" y2="112.0" stroke="#e5e5e5"/>
+<text x="62" y="116.0" text-anchor="end" font-size="11" font-family="Arial">8.9</text>
+<line x1="66" y1="55.0" x2="950" y2="55.0" stroke="#e5e5e5"/>
+<text x="62" y="59.0" text-anchor="end" font-size="11" font-family="Arial">11.1</text>
+<text x="143.33333333333331" y="385" text-anchor="middle" font-size="12" font-family="Arial">same_close</text>
+<rect x="94.44444444444444" y="248.92948608502647" width="39.111111111111114" height="91.07051391497353" fill="#4C78A8"/>
+<text x="114.0" y="244.92948608502647" text-anchor="middle" font-size="10" font-family="Arial">3.56</text>
+<rect x="143.33333333333331" y="55.0" width="39.111111111111114" height="285.0" fill="#F58518"/>
+<text x="162.88888888888886" y="51.0" text-anchor="middle" font-size="10" font-family="Arial">11.13</text>
+<text x="290.0" y="385" text-anchor="middle" font-size="12" font-family="Arial">next_open</text>
+<rect x="241.1111111111111" y="245.0110978316544" width="39.111111111111114" height="94.98890216834559" fill="#4C78A8"/>
+<text x="260.66666666666663" y="241.0110978316544" text-anchor="middle" font-size="10" font-family="Arial">3.71</text>
+<rect x="290.0" y="125.1954925729896" width="39.111111111111114" height="214.8045074270104" fill="#F58518"/>
+<text x="309.55555555555554" y="121.1954925729896" text-anchor="middle" font-size="10" font-family="Arial">8.39</text>
+<text x="436.66666666666663" y="385" text-anchor="middle" font-size="12" font-family="Arial">wait_2d_close</text>
+<rect x="387.77777777777777" y="241.98651186614308" width="39.111111111111114" height="98.01348813385692" fill="#4C78A8"/>
+<text x="407.3333333333333" y="237.98651186614308" text-anchor="middle" font-size="10" font-family="Arial">3.83</text>
+<rect x="436.66666666666663" y="128.8885094758409" width="39.111111111111114" height="211.1114905241591" fill="#F58518"/>
+<text x="456.2222222222222" y="124.88850947584089" text-anchor="middle" font-size="10" font-family="Arial">8.24</text>
+<text x="583.3333333333334" y="385" text-anchor="middle" font-size="12" font-family="Arial">wait_3d_close</text>
+<rect x="534.4444444444445" y="242.97251152467135" width="39.111111111111114" height="97.02748847532865" fill="#4C78A8"/>
+<text x="554.0" y="238.97251152467135" text-anchor="middle" font-size="10" font-family="Arial">3.79</text>
+<rect x="583.3333333333334" y="130.52757384326446" width="39.111111111111114" height="209.47242615673554" fill="#F58518"/>
+<text x="602.8888888888889" y="126.52757384326446" text-anchor="middle" font-size="10" font-family="Arial">8.18</text>
+<text x="730.0" y="385" text-anchor="middle" font-size="12" font-family="Arial">pullback_2pct</text>
+<rect x="681.1111111111111" y="252.97336520402936" width="39.111111111111114" height="87.02663479597064" fill="#4C78A8"/>
+<text x="700.6666666666666" y="248.97336520402936" text-anchor="middle" font-size="10" font-family="Arial">3.40</text>
+<rect x="730.0" y="119.24107905070855" width="39.111111111111114" height="220.75892094929145" fill="#F58518"/>
+<text x="749.5555555555555" y="115.24107905070855" text-anchor="middle" font-size="10" font-family="Arial">8.62</text>
+<text x="876.6666666666666" y="385" text-anchor="middle" font-size="12" font-family="Arial">pullback_4pct</text>
+<rect x="827.7777777777777" y="252.76848215810142" width="39.111111111111114" height="87.23151784189858" fill="#4C78A8"/>
+<text x="847.3333333333333" y="248.76848215810142" text-anchor="middle" font-size="10" font-family="Arial">3.41</text>
+<rect x="876.6666666666666" y="117.56359911217348" width="39.111111111111114" height="222.43640088782652" fill="#F58518"/>
+<text x="896.2222222222222" y="113.56359911217348" text-anchor="middle" font-size="10" font-family="Arial">8.69</text>
+<rect x="70" y="392" width="12" height="12" fill="#4C78A8"/>
+<text x="88" y="402" font-size="11" font-family="Arial">Event-level Sharpe</text>
+<rect x="220" y="392" width="12" height="12" fill="#F58518"/>
+<text x="238" y="402" font-size="11" font-family="Arial">Date-aggregated Sharpe</text>
+</svg>

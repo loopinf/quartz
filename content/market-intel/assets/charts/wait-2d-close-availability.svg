@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="420">
+<rect width="100%" height="100%" fill="white"/>
+<text x="490.0" y="28" text-anchor="middle" font-size="20" font-family="Arial">Entry availability by rule (%)</text>
+<line x1="70" y1="55" x2="70" y2="340" stroke="black"/>
+<line x1="70" y1="340" x2="950" y2="340" stroke="black"/>
+<line x1="66" y1="340.0" x2="950" y2="340.0" stroke="#e5e5e5"/>
+<text x="62" y="344.0" text-anchor="end" font-size="11" font-family="Arial">0.0</text>
+<line x1="66" y1="283.0" x2="950" y2="283.0" stroke="#e5e5e5"/>
+<text x="62" y="287.0" text-anchor="end" font-size="11" font-family="Arial">20.0</text>
+<line x1="66" y1="226.0" x2="950" y2="226.0" stroke="#e5e5e5"/>
+<text x="62" y="230.0" text-anchor="end" font-size="11" font-family="Arial">40.0</text>
+<line x1="66" y1="169.0" x2="950" y2="169.0" stroke="#e5e5e5"/>
+<text x="62" y="173.0" text-anchor="end" font-size="11" font-family="Arial">60.0</text>
+<line x1="66" y1="112.0" x2="950" y2="112.0" stroke="#e5e5e5"/>
+<text x="62" y="116.0" text-anchor="end" font-size="11" font-family="Arial">80.0</text>
+<line x1="66" y1="55.0" x2="950" y2="55.0" stroke="#e5e5e5"/>
+<text x="62" y="59.0" text-anchor="end" font-size="11" font-family="Arial">100.0</text>
+<text x="143.33333333333331" y="385" text-anchor="middle" font-size="12" font-family="Arial">same_close</text>
+<rect x="106.66666666666666" y="55.0" width="58.666666666666664" height="285.0" fill="#54A24B"/>
+<text x="136.0" y="51.0" text-anchor="middle" font-size="10" font-family="Arial">100.00</text>
+<text x="290.0" y="385" text-anchor="middle" font-size="12" font-family="Arial">next_open</text>
+<rect x="253.33333333333331" y="55.02850000000001" width="58.666666666666664" height="284.9715" fill="#54A24B"/>
+<text x="282.66666666666663" y="51.02850000000001" text-anchor="middle" font-size="10" font-family="Arial">99.99</text>
+<text x="436.66666666666663" y="385" text-anchor="middle" font-size="12" font-family="Arial">wait_2d_close</text>
+<rect x="400.0" y="56.93799999999999" width="58.666666666666664" height="283.062" fill="#54A24B"/>
+<text x="429.3333333333333" y="52.93799999999999" text-anchor="middle" font-size="10" font-family="Arial">99.32</text>
+<text x="583.3333333333334" y="385" text-anchor="middle" font-size="12" font-family="Arial">wait_3d_close</text>
+<rect x="546.6666666666666" y="58.84749999999997" width="58.666666666666664" height="281.15250000000003" fill="#54A24B"/>
+<text x="576.0" y="54.84749999999997" text-anchor="middle" font-size="10" font-family="Arial">98.65</text>
+<text x="730.0" y="385" text-anchor="middle" font-size="12" font-family="Arial">pullback_2pct</text>
+<rect x="693.3333333333333" y="109.71999999999994" width="58.666666666666664" height="230.28000000000006" fill="#54A24B"/>
+<text x="722.6666666666666" y="105.71999999999994" text-anchor="middle" font-size="10" font-family="Arial">80.80</text>
+<text x="876.6666666666666" y="385" text-anchor="middle" font-size="12" font-family="Arial">pullback_4pct</text>
+<rect x="839.9999999999999" y="132.14950000000002" width="58.666666666666664" height="207.85049999999998" fill="#54A24B"/>
+<text x="869.3333333333333" y="128.14950000000002" text-anchor="middle" font-size="10" font-family="Arial">72.93</text>
+<rect x="70" y="392" width="12" height="12" fill="#54A24B"/>
+<text x="88" y="402" font-size="11" font-family="Arial">Availability %</text>
+</svg>

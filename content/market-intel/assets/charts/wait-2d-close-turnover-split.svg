@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="420">
+<rect width="100%" height="100%" fill="white"/>
+<text x="490.0" y="28" text-anchor="middle" font-size="20" font-family="Arial">Turnover split Sharpe: same_close vs next_open vs wait_2d_close</text>
+<line x1="70" y1="55" x2="70" y2="340" stroke="black"/>
+<line x1="70" y1="340" x2="950" y2="340" stroke="black"/>
+<line x1="66" y1="340.0" x2="950" y2="340.0" stroke="#e5e5e5"/>
+<text x="62" y="344.0" text-anchor="end" font-size="11" font-family="Arial">0.0</text>
+<line x1="66" y1="283.0" x2="950" y2="283.0" stroke="#e5e5e5"/>
+<text x="62" y="287.0" text-anchor="end" font-size="11" font-family="Arial">0.9</text>
+<line x1="66" y1="226.0" x2="950" y2="226.0" stroke="#e5e5e5"/>
+<text x="62" y="230.0" text-anchor="end" font-size="11" font-family="Arial">1.8</text>
+<line x1="66" y1="169.0" x2="950" y2="169.0" stroke="#e5e5e5"/>
+<text x="62" y="173.0" text-anchor="end" font-size="11" font-family="Arial">2.7</text>
+<line x1="66" y1="112.0" x2="950" y2="112.0" stroke="#e5e5e5"/>
+<text x="62" y="116.0" text-anchor="end" font-size="11" font-family="Arial">3.6</text>
+<line x1="66" y1="55.0" x2="950" y2="55.0" stroke="#e5e5e5"/>
+<text x="62" y="59.0" text-anchor="end" font-size="11" font-family="Arial">4.4</text>
+<text x="216.66666666666666" y="385" text-anchor="middle" font-size="12" font-family="Arial">low</text>
+<rect x="106.66666666666666" y="131.49436660894594" width="58.666666666666664" height="208.50563339105406" fill="#808080"/>
+<text x="136.0" y="127.49436660894594" text-anchor="middle" font-size="10" font-family="Arial">3.25</text>
+<rect x="180.0" y="86.07203094429576" width="58.666666666666664" height="253.92796905570424" fill="#4C78A8"/>
+<text x="209.33333333333334" y="82.07203094429576" text-anchor="middle" font-size="10" font-family="Arial">3.96</text>
+<rect x="253.33333333333331" y="55.0" width="58.666666666666664" height="285.0" fill="#F58518"/>
+<text x="282.66666666666663" y="51.0" text-anchor="middle" font-size="10" font-family="Arial">4.45</text>
+<text x="510.0" y="385" text-anchor="middle" font-size="12" font-family="Arial">mid</text>
+<rect x="400.0" y="176.0835001236872" width="58.666666666666664" height="163.9164998763128" fill="#808080"/>
+<text x="429.3333333333333" y="172.0835001236872" text-anchor="middle" font-size="10" font-family="Arial">2.56</text>
+<rect x="473.3333333333333" y="178.53824184226505" width="58.666666666666664" height="161.46175815773495" fill="#4C78A8"/>
+<text x="502.66666666666663" y="174.53824184226505" text-anchor="middle" font-size="10" font-family="Arial">2.52</text>
+<rect x="546.6666666666666" y="178.58951582072095" width="58.666666666666664" height="161.41048417927905" fill="#F58518"/>
+<text x="576.0" y="174.58951582072095" text-anchor="middle" font-size="10" font-family="Arial">2.52</text>
+<text x="803.3333333333333" y="385" text-anchor="middle" font-size="12" font-family="Arial">high</text>
+<rect x="693.3333333333333" y="135.50014617581576" width="58.666666666666664" height="204.49985382418424" fill="#808080"/>
+<text x="722.6666666666666" y="131.50014617581576" text-anchor="middle" font-size="10" font-family="Arial">3.19</text>
+<rect x="766.6666666666666" y="128.5781590842647" width="58.666666666666664" height="211.4218409157353" fill="#4C78A8"/>
+<text x="796.0" y="124.57815908426471" text-anchor="middle" font-size="10" font-family="Arial">3.30</text>
+<rect x="840.0" y="119.59239435986237" width="58.666666666666664" height="220.40760564013763" fill="#F58518"/>
+<text x="869.3333333333334" y="115.59239435986237" text-anchor="middle" font-size="10" font-family="Arial">3.44</text>
+<rect x="70" y="392" width="12" height="12" fill="#808080"/>
+<text x="88" y="402" font-size="11" font-family="Arial">same_close</text>
+<rect x="220" y="392" width="12" height="12" fill="#4C78A8"/>
+<text x="238" y="402" font-size="11" font-family="Arial">next_open</text>
+<rect x="370" y="392" width="12" height="12" fill="#F58518"/>
+<text x="388" y="402" font-size="11" font-family="Arial">wait_2d_close</text>
+</svg>
