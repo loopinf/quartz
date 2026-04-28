@@ -1,16 +1,16 @@
 ---
 id: conditional-probability-entry-rule-manager-review-2026-04-27
-title: Conditional probability / entry-rule manager review
-summary: conditional matrix, winner maps, promotion blockers, and Quartz-visible drill-down path for manager review.
+title: "Conditional probability calculation audit / manager review"
+summary: conditional probability 계산 과정, winner maps, promotion blockers, and Quartz-visible drill-down path for manager review.
 updated_at: 2026-04-27 15:32:22
 source_type: manager-grade-review-note
 time_verification_status: confirmed
 ---
 
-# Conditional probability / entry-rule manager review
+# Conditional probability calculation audit / manager review
 
 이 페이지는 **manager가 바로 검토할 최종 surface**다.
-결론만 적지 않고, **single-axis matrix → pairwise winner map → coverage risk → audit path**까지 한 번에 보이게 묶었다.
+결론만 적지 않고, **conditional probability 계산 과정이 어떤 구조로 만들어졌고 → 어디까지 믿을 수 있고 → 아직 무엇이 production blocker인지**를 `single-axis matrix → pairwise winner map → coverage risk → audit path` 순서로 한 번에 보이게 묶었다.
 
 ## One-line manager answer
 > **Use `wait_2d_close` as the current audited breakout baseline, but do not approve any context-specific override for production yet.**
@@ -23,7 +23,7 @@ time_verification_status: confirmed
 - manager reading: **conditional hypothesis map exists, production override does not.**
 
 ## Click-through proof map
-- [wait_2d_close review](/market-intel/research/wait-2d-close-review)
+- [entry-rule calculation audit (worked example: wait_2d_close)](/market-intel/research/wait-2d-close-review)
 - [High Signal Entry Backtest Sample](/market-intel/research/high-signal-entry-backtest-sample)
 - [prediction workspace](/market-intel/research/prediction-workspace)
 - [2026-04-27_next-session-prep](/market-intel/daily/2026-04-27_next-session-prep)
@@ -148,7 +148,7 @@ time_verification_status: confirmed
 - code: `scripts/render_high_signal_conditional_manager_surface.py`
 
 ## Reviewer drill-down
-- canonical baseline audit note: [wait_2d_close review](/market-intel/research/wait-2d-close-review)
+- canonical baseline audit note: [entry-rule calculation audit (worked example: wait_2d_close)](/market-intel/research/wait-2d-close-review)
 - live workspace context: [prediction workspace](/market-intel/research/prediction-workspace)
 - latest prep example: [2026-04-27_next-session-prep](/market-intel/daily/2026-04-27_next-session-prep)
 

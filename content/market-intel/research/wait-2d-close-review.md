@@ -1,17 +1,17 @@
 ---
 id: wait-2d-close-review-2026-04-25
-title: wait_2d_close review
+title: "Entry-rule calculation audit (worked example: wait_2d_close)"
 summary: full-range breakout recheck 기준에서 wait_2d_close를 어떻게 해석해야 하는지, verification / bug checks / robustness / usability까지 포함해 manager-grade로 정리한 audit note.
 created_at: 2026-04-25 12:56:21 KST
-updated_at: 2026-04-25 16:09:30 KST
+updated_at: 2026-04-27 13:07:27 KST
 source_data: /Users/gbserver/repos/jmkr_kj/data/signals/high-signal-entry-outcomes/vbtpro-recheck-2025-04-01-to-2026-04-16.json
 source_type: technical-entry-rule-review
 time_verification_status: confirmed
 ---
 
-# wait_2d_close Review
+# Entry-rule calculation audit (worked example: `wait_2d_close`)
 
-이 문서는 `wait_2d_close`를 **manager review를 통과할 수 있는 형태**로 다시 정리한 note다.
+이 문서는 `wait_2d_close`를 **entry-rule 계산이 실제로 어떻게 흘렀는지, 어디서 버그가 날 수 있는지, 그래서 왜 현재 숫자를 어느 정도 믿을 수 있는지**까지 manager가 추적할 수 있게 다시 정리한 audit note다.
 이번 업데이트에서 가장 중요한 변화는 하나다.
 
 - 단순히 “차트와 표를 붙인 문서”가 아니라,
@@ -93,7 +93,7 @@ flowchart TD
     B --> C[export_high_signal_entry_outcomes.py<br/>per-event x per-rule outcome rows]
     C --> D[recompute_high_signal_entry_metrics.py<br/>audit repair from stored entry_price]
     D --> E[vbtpro_recheck_high_signal_entry_rules.py<br/>full-range rule summary]
-    E --> F[wait_2d_close review note<br/>verification + visuals + interpretation]
+    E --> F[entry-rule calculation audit note<br/>verification + visuals + interpretation]
 ```
 
 ## How the rules are defined
@@ -210,7 +210,21 @@ recheck summary는
 
 이 숫자는 availability / usable count / late-window drop 간의 관계가 비정상적으로 튀지 않는다는 점에서 sanity check로도 쓸 수 있다.
 
-### Verification check 6: corrected ranking is economically more plausible
+### Verification check 6: multi-sample manual recomputation
+validator bot은 single spot-check로 끝나지 않는다.
+현재 기본 설정에선 `wait_2d_close` usable history에서 **5개 sample을 분산 선택**해 다시 계산한다.
+
+대표 worked example:
+- `event_id`: `52w_breakout:065500:2025-04-01`
+- manual entry date: `2025-04-03`
+- manual `ret_20d`: `-36.55%`
+- stored `ret_20d`: `-36.55%`
+
+즉 한 건만 맞는지 보는 게 아니라,
+- 과거 초반 / 중반 / 후반에 걸친 여러 sample에서
+- `entry_date`와 `ret_20d`가 stored row와 계속 일치하는지 확인한다.
+
+### Verification check 7: corrected ranking is economically more plausible
 수정 후에는 다음이 관찰된다.
 - `next_open` and `wait_1d_close` are no longer numerically identical
 - `pullback` 평균수익이 더 올라가지만 availability penalty는 그대로 남음
@@ -334,18 +348,30 @@ manager는 결국 이걸 묻는다.
 그래서 리포트 작성 bot와 별도로, **리포트 검증 bot**이 있어야 한다.
 
 현재 검증 스크립트:
-- `scripts/validate_wait_2d_close_report.py`
+- framework core: `scripts/research_report_validator.py`
+- report-specific adapter: `scripts/validate_wait_2d_close_report.py`
 
-역할:
-- corrected raw outcome JSON과 recheck summary를 다시 읽는다
-- report 안의 핵심 claim/숫자/bug section/차트 참조를 검증한다
-- 특히 아래를 자동 확인한다
-  - `wait_2d_close` Sharpe claim이 recheck JSON과 일치하는가
-  - `wait_2d_close` count reconciliation row가 최신 corrected counts와 일치하는가
-  - `next_open` vs `wait_1d_close` mismatch count (`28,007`)가 note에 명시돼 있는가
-  - mismatch sample event (`52w_breakout:042700:2026-03-10`) 값이 note에 들어 있는가
-  - required chart assets가 note에 참조되고 실제 파일도 존재하는가
-  - verification provenance script들이 note에 언급돼 있는가
+핵심은 **multi-pass validation**이다.
+한 번만 보는 게 아니라, 서로 다른 관점으로 여러 번 다시 확인한다.
+
+### Pass 1: data integrity pass
+- `same_close` availability가 total과 일치하는가
+- time-rule availability가 단조적으로 줄어드는가
+- recheck `trade_count`가 corrected raw `usable_20d` count와 정확히 일치하는가
+
+### Pass 2: rule-definition divergence pass
+- `next_open` vs `wait_1d_close`가 실제로 다른 결과를 내는가
+- mismatch count와 sample mismatch event가 존재하는가
+
+### Pass 3: multi-sample manual recomputation pass
+- `wait_2d_close` usable history에서 기본 `5개` sample을 분산 선택
+- 각 sample마다 `entry_date`와 `ret_20d`를 raw price DB에서 다시 계산
+- stored row와 계속 일치하는지 확인
+
+### Pass 4: report text / chart / provenance pass
+- report 안의 핵심 claim/숫자/bug section/차트 참조를 검증
+- required chart assets 실제 파일 존재 여부 확인
+- provenance script 언급 여부 확인
 
 run command:
 ```bash
@@ -353,15 +379,21 @@ cd /Users/gbserver/repos/jmkr_kj
 python scripts/validate_wait_2d_close_report.py
 ```
 
+optional stronger spot-check run:
+```bash
+python scripts/validate_wait_2d_close_report.py --manual-check-count 9
+```
+
 expected behavior:
-- exit code `0` → report와 corrected data가 일치
-- exit code `1` → report가 stale/missing/incorrect claim을 포함
+- exit code `0` → 모든 pass 통과
+- exit code `1` → 하나라도 stale/missing/incorrect claim 또는 data inconsistency 존재
 
 manager 관점에선 이게 중요하다.
 - report bot이 실수할 수 있다는 걸 전제로 하고
-- **검증 bot이 숫자와 문구를 다시 잡아줘야 하기 때문**이다.
+- **validator bot이 숫자 / 문구 / 차트 / 샘플 재계산을 여러 각도에서 다시 잡아줘야 하기 때문**이다.
 
 ## Companion notes
+- manager decision memo: [[market-intel/research/2026-04-27-conditional-probability-entry-rule-manager-review|2026-04-27 conditional probability / entry-rule manager review]]
 - sample review: [[market-intel/research/high-signal-entry-backtest-sample|high-signal-entry-backtest-sample]]
 - roadmap: [[market-intel/research/high-signal-entry-timing-roadmap|high-signal-entry-timing-roadmap]]
 - broader review note: [[market-intel/research/high-signal-entry-rule-review-2025-04-01-to-2026-04-16|high-signal-entry-rule-review-2025-04-01-to-2026-04-16]]

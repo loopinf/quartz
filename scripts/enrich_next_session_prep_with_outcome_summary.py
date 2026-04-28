@@ -202,11 +202,11 @@ def build_section(note_text: str) -> str:
                 f"- interpretation: 전구간 breakout baseline에선 `{top['entry_rule']}`가 현재 audited default comparison anchor이고, conditional override는 아직 `exploratory` 단계다."
             )
             out.append("- review links:")
-            out.append("  - [[market-intel/research/wait-2d-close-review|wait_2d_close review]]")
-            out.append("  - [[market-intel/research/2026-04-27-conditional-probability-entry-rule-manager-review|Conditional probability / entry-rule manager review]]")
+            out.append("  - [[market-intel/research/2026-04-27-conditional-probability-entry-rule-manager-review|Conditional probability calculation audit / manager review]]")
+            out.append("  - [[market-intel/research/wait-2d-close-review|Entry-rule calculation audit (worked example: wait_2d_close)]]")
             out.append("- direct result shortcuts:")
-            out.append("  - local: [wait_2d_close review](http://127.0.0.1:8081/market-intel/research/wait-2d-close-review) / [entry-rule manager review](http://127.0.0.1:8081/market-intel/research/2026-04-27-conditional-probability-entry-rule-manager-review)")
-            out.append("  - tailscale: [wait_2d_close review](http://gbs-mac-mini.taila43069.ts.net:8081/market-intel/research/wait-2d-close-review) / [entry-rule manager review](http://gbs-mac-mini.taila43069.ts.net:8081/market-intel/research/2026-04-27-conditional-probability-entry-rule-manager-review)")
+            out.append("  - local: [conditional probability calculation audit](http://127.0.0.1:8081/market-intel/research/2026-04-27-conditional-probability-entry-rule-manager-review) / [entry-rule calculation audit worked example](http://127.0.0.1:8081/market-intel/research/wait-2d-close-review)")
+            out.append("  - tailscale: [conditional probability calculation audit](http://gbs-mac-mini.taila43069.ts.net:8081/market-intel/research/2026-04-27-conditional-probability-entry-rule-manager-review) / [entry-rule calculation audit worked example](http://gbs-mac-mini.taila43069.ts.net:8081/market-intel/research/wait-2d-close-review)")
             cluster = [f"`{item['entry_rule']}`" for item in ranked[:4] if item.get("entry_rule") != top["entry_rule"]]
             if cluster:
                 out.append(
