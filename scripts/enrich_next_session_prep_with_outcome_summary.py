@@ -204,6 +204,9 @@ def build_section(note_text: str) -> str:
             out.append("- review links:")
             out.append("  - [[market-intel/research/wait-2d-close-review|wait_2d_close review]]")
             out.append("  - [[market-intel/research/2026-04-27-conditional-probability-entry-rule-manager-review|Conditional probability / entry-rule manager review]]")
+            out.append("- direct result shortcuts:")
+            out.append("  - local: [wait_2d_close review](http://127.0.0.1:8081/market-intel/research/wait-2d-close-review) / [entry-rule manager review](http://127.0.0.1:8081/market-intel/research/2026-04-27-conditional-probability-entry-rule-manager-review)")
+            out.append("  - tailscale: [wait_2d_close review](http://gbs-mac-mini.taila43069.ts.net:8081/market-intel/research/wait-2d-close-review) / [entry-rule manager review](http://gbs-mac-mini.taila43069.ts.net:8081/market-intel/research/2026-04-27-conditional-probability-entry-rule-manager-review)")
             cluster = [f"`{item['entry_rule']}`" for item in ranked[:4] if item.get("entry_rule") != top["entry_rule"]]
             if cluster:
                 out.append(
