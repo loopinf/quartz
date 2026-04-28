@@ -174,6 +174,7 @@ def build_section(note_text: str) -> str:
             {
                 "entry_rule": r["entry_rule"],
                 "trade_count": r.get("trade_count", 0),
+                "available_count": r.get("available_count", 0),
                 "ret_5d_avg": r.get("ret_5d_avg"),
                 "ret_10d_avg": r.get("ret_10d_avg"),
                 "ret_20d_avg": r.get("ret_20d_avg"),
@@ -182,12 +183,36 @@ def build_section(note_text: str) -> str:
             }
             for r in global_summary
         ], min_available=100)
-        out.append("- full-range breakout baseline (2025-04-01 ~ 2026-04-16, vectorbtpro recheck)")
-        for item in ranked[:3]:
-            out.append(
-                f"  - `{item['entry_rule']}`: 20d avg `{item['ret_20d_avg']}%`, 10d avg `{item.get('ret_10d_avg')}%`, 20d win `{item.get('ret_20d_win_rate')}`"
+        top = ranked[0] if ranked else None
+        if top:
+            baseline_total = max(
+                int(r.get("available") or r.get("available_count") or r.get("trade_count") or 0)
+                for r in ranked
+            ) if ranked else 0
+            available_count = top.get("available") or top.get("available_count") or top.get("trade_count") or 0
+            availability = (available_count / baseline_total * 100) if baseline_total else None
+            out.append(f"- current audited pooled baseline: `{top['entry_rule']}`")
+            out.append("- status: **risk-adjusted baseline candidate**, not approved as a context-specific production override")
+            evidence = (
+                f"20d Sharpe {top.get('ret_20d_sharpe')} | usable20 {top.get('trade_count')}"
+                + (f" | availability {availability:.2f}%" if availability is not None else "")
             )
-        out.append("- baseline 해석: 전구간 breakout backtest에선 `wait_2d_close / wait_3d_close / next_open`이 Sharpe 기준 상위권이고, `pullback` 계열은 평균 수익은 강하지만 available 비율을 같이 봐야 한다.")
+            out.append(f"- compact evidence line: `{evidence}`")
+            out.append(
+                f"- interpretation: 전구간 breakout baseline에선 `{top['entry_rule']}`가 현재 audited default comparison anchor이고, conditional override는 아직 `exploratory` 단계다."
+            )
+            out.append("- review links:")
+            out.append("  - [[market-intel/research/wait-2d-close-review|wait_2d_close review]]")
+            out.append("  - [[market-intel/research/2026-04-27-conditional-probability-entry-rule-manager-review|Conditional probability / entry-rule manager review]]")
+            cluster = [f"`{item['entry_rule']}`" for item in ranked[:4] if item.get("entry_rule") != top["entry_rule"]]
+            if cluster:
+                out.append(
+                    "- note: "
+                    + " / ".join(cluster)
+                    + "도 top-tier cluster로 남아 있으므로, prep에서는 naked winner claim보다 **audited baseline + click-through review path**를 우선한다."
+                )
+        else:
+            out.append("- full-range vectorbtpro baseline summary unavailable")
     else:
         out.append("- full-range vectorbtpro baseline summary unavailable")
 
