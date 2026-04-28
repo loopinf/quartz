@@ -29,7 +29,7 @@ time_verification_status: confirmed
 - [2026-04-27_next-session-prep](/market-intel/daily/2026-04-27_next-session-prep)
 
 ## Review surface 1 — coverage risk first
-![conditional unknown coverage](../assets/charts/high-signal-conditional-unknown-coverage.svg)
+![conditional unknown coverage](/market-intel/assets/charts/high-signal-conditional-unknown-coverage.svg)
 
 ### Why this matters
 - high missingness means some buckets are only **descriptive diagnostics**, not deployable context rules.
@@ -46,7 +46,7 @@ time_verification_status: confirmed
 | `carryover_ratio_from_prev_day` | 27,762 | 29,260 | 94.9% |
 
 ## Review surface 2 — single-axis winner board
-![single-axis winner board](../assets/charts/high-signal-conditional-axis-winner-board.svg)
+![single-axis winner board](/market-intel/assets/charts/high-signal-conditional-axis-winner-board.svg)
 
 | axis | bucket | winner | Sharpe20 | status |
 | --- | --- | --- | ---: | --- |
@@ -87,44 +87,44 @@ time_verification_status: confirmed
 각 셀은 `Sharpe20 / usable20`이고, 테두리 색은 `promoted / exploratory / too_sparse` 상태다.
 
 ### signal_type
-![signal_type heatmap](../assets/charts/high-signal-conditional-signal-type-rule-heatmap.svg)
+![signal_type heatmap](/market-intel/assets/charts/high-signal-conditional-signal-type-rule-heatmap.svg)
 
 ### prior_breakout_1_age_trading_days
-![prior_breakout_1_age_trading_days heatmap](../assets/charts/high-signal-conditional-prior-breakout-1-age-trading-days-rule-heatmap.svg)
+![prior_breakout_1_age_trading_days heatmap](/market-intel/assets/charts/high-signal-conditional-prior-breakout-1-age-trading-days-rule-heatmap.svg)
 
 ### days_in_90_zone
-![days_in_90_zone heatmap](../assets/charts/high-signal-conditional-days-in-90-zone-rule-heatmap.svg)
+![days_in_90_zone heatmap](/market-intel/assets/charts/high-signal-conditional-days-in-90-zone-rule-heatmap.svg)
 
 ### low_52w_age_pct_in_52w
-![low_52w_age_pct_in_52w heatmap](../assets/charts/high-signal-conditional-low-52w-age-pct-in-52w-rule-heatmap.svg)
+![low_52w_age_pct_in_52w heatmap](/market-intel/assets/charts/high-signal-conditional-low-52w-age-pct-in-52w-rule-heatmap.svg)
 
 ### avg_turnover_20d_B
-![avg_turnover_20d_B heatmap](../assets/charts/high-signal-conditional-avg-turnover-20d-b-rule-heatmap.svg)
+![avg_turnover_20d_B heatmap](/market-intel/assets/charts/high-signal-conditional-avg-turnover-20d-b-rule-heatmap.svg)
 
 ### event_breadth_n
-![event_breadth_n heatmap](../assets/charts/high-signal-conditional-event-breadth-n-rule-heatmap.svg)
+![event_breadth_n heatmap](/market-intel/assets/charts/high-signal-conditional-event-breadth-n-rule-heatmap.svg)
 
 ### carryover_ratio_from_prev_day
-![carryover_ratio_from_prev_day heatmap](../assets/charts/high-signal-conditional-carryover-ratio-from-prev-day-rule-heatmap.svg)
+![carryover_ratio_from_prev_day heatmap](/market-intel/assets/charts/high-signal-conditional-carryover-ratio-from-prev-day-rule-heatmap.svg)
 
 ## Pairwise winner maps
 이 섹션은 manager가 제일 궁금해하는 **regime switch**를 보여준다.
 즉, `조건 A × 조건 B` 조합에서 pooled baseline을 실제로 뒤집는 winner가 있는지 본다.
 
 ### signal_type × prior_breakout_1_age_trading_days
-![signal_type x prior_breakout_1_age_trading_days winner map](../assets/charts/high-signal-conditional-signal-type-prior-breakout-1-age-trading-days-winner-map.svg)
+![signal_type x prior_breakout_1_age_trading_days winner map](/market-intel/assets/charts/high-signal-conditional-signal-type-prior-breakout-1-age-trading-days-winner-map.svg)
 
 ### signal_type × days_in_90_zone
-![signal_type x days_in_90_zone winner map](../assets/charts/high-signal-conditional-signal-type-days-in-90-zone-winner-map.svg)
+![signal_type x days_in_90_zone winner map](/market-intel/assets/charts/high-signal-conditional-signal-type-days-in-90-zone-winner-map.svg)
 
 ### days_in_90_zone × low_52w_age_pct_in_52w
-![days_in_90_zone x low_52w_age_pct_in_52w winner map](../assets/charts/high-signal-conditional-days-in-90-zone-low-52w-age-pct-in-52w-winner-map.svg)
+![days_in_90_zone x low_52w_age_pct_in_52w winner map](/market-intel/assets/charts/high-signal-conditional-days-in-90-zone-low-52w-age-pct-in-52w-winner-map.svg)
 
 ### avg_turnover_20d_B × prior_breakout_1_age_trading_days
-![avg_turnover_20d_B x prior_breakout_1_age_trading_days winner map](../assets/charts/high-signal-conditional-avg-turnover-20d-b-prior-breakout-1-age-trading-days-winner-map.svg)
+![avg_turnover_20d_B x prior_breakout_1_age_trading_days winner map](/market-intel/assets/charts/high-signal-conditional-avg-turnover-20d-b-prior-breakout-1-age-trading-days-winner-map.svg)
 
 ### event_breadth_n × carryover_ratio_from_prev_day
-![event_breadth_n x carryover_ratio_from_prev_day winner map](../assets/charts/high-signal-conditional-event-breadth-n-carryover-ratio-from-prev-day-winner-map.svg)
+![event_breadth_n x carryover_ratio_from_prev_day winner map](/market-intel/assets/charts/high-signal-conditional-event-breadth-n-carryover-ratio-from-prev-day-winner-map.svg)
 
 ## Manager interpretation
 - baseline answer는 있다: `wait_2d_close`.
