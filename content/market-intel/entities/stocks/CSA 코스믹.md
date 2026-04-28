@@ -1,0 +1,60 @@
+---
+entity_type: stock
+created_at: 2026-04-24 18:41:54 KST
+updated_at: 2026-04-27 18:41:36 KST
+name: CSA 코스믹
+source_note: [[market-intel/daily/2026-04-24_top30_recap|2026-04-24_top30_recap]]
+theme_tags: ["화장품"]
+---
+
+# CSA 코스믹
+
+## Overview
+- 상승률: 29.80% (2026-04-24 TOP30 기준)
+- 설명: 화장품관련주, 시총200억대, 화장품사업, 저시총, 자금조달 진행 중, 이번 춘절에 중국 단체관광객 비자 면제 효과와 최근 중-일 관계 경색에 따른 반사이익이 맞물리며 코로나19 사태 이후 최대 규모의 관광객이 방한할 것으로 전망, 원화 약세로 한국 화장품 경쟁력 상승, 화장품 업계의 사상최대 실적 달성과 수출 증대로 인하여 증권사들의 호평 등
+- 리스크 플래그: 없음
+
+- 상승률: 29.91% (2026-04-27 TOP30 기준)
+- 설명: 화장품관련주, 시총200억대, 화장품사업, 저시총, 자금조달 진행 중, 해외 관광객 증가와 한국화장품 경쟁력 증대에 따른 수혜 기대감, 화장품 업계의 사상최대 실적 달성과 수출 증대로 인하여 증권사들의 호평 등
+
+## Theme Tags
+- 화장품
+
+## Event History
+- 2026-04-24: [[market-intel/events/2026-04-24_화장품_모멘텀|2026-04-24_화장품_모멘텀]] — 2026-04-24 화장품 모멘텀
+
+- 2026-04-27: [[market-intel/daily/2026-04-27_top30_recap|2026-04-27_top30_recap]] — 2026-04-27 TOP30 등장
+
+## Related Stocks
+<style>
+.mi-related-inline-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(220px,100%),1fr));gap:8px 12px;margin:8px 0 10px;max-width:100%;width:100%;overflow-x:clip}
+.mi-related-inline-item{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px;min-width:0;max-width:100%;box-sizing:border-box;padding:6px 8px;border:1px solid var(--lightgray);border-radius:10px;background:color-mix(in srgb, var(--light) 94%, transparent);overflow:hidden}
+.mi-related-inline-name{min-width:0;font-weight:600;text-decoration:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mi-related-inline-spark-wrap{min-width:0;max-width:100%;width:clamp(84px,30vw,132px);display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;column-gap:4px;margin-left:auto}
+.mi-related-inline-sparkline{display:block;min-width:0;width:100%;max-width:100%;height:auto;max-height:24px;opacity:.94}
+.mi-related-inline-delta{font-size:.68rem;line-height:1;color:var(--gray);white-space:nowrap}
+.mi-related-inline-list ~ ul{display:none}
+@media (max-width: 800px){
+  .mi-related-inline-list{grid-template-columns:1fr;gap:6px}
+  .mi-related-inline-item{gap:6px;padding:6px}
+  .mi-related-inline-name{font-size:.92rem}
+  .mi-related-inline-spark-wrap{width:clamp(90px,34vw,138px)}
+  .mi-related-inline-sparkline{max-height:22px}
+}
+@media (max-width: 480px){
+  .mi-related-inline-item{grid-template-columns:minmax(0,1fr);align-items:stretch;row-gap:4px}
+  .mi-related-inline-spark-wrap{width:100%;grid-template-columns:minmax(0,1fr) auto;justify-self:stretch;margin-left:0}
+  .mi-related-inline-sparkline{justify-self:stretch;width:100%;max-height:20px}
+  .mi-related-inline-delta{font-size:.64rem}
+}
+</style>
+
+<div class="mi-related-inline-list"><div class="mi-related-inline-item"><a class="mi-related-inline-name" href="/market-intel/entities/stocks/%EB%B7%B0%ED%8B%B0%EC%8A%A4%ED%82%A8">뷰티스킨</a><div class="mi-related-inline-spark-wrap"><img class="mi-related-inline-sparkline" src="/market-intel/assets/stock-related-sparklines/CSA%20%EC%BD%94%EC%8A%A4%EB%AF%B9/%EB%B7%B0%ED%8B%B0%EC%8A%A4%ED%82%A8.svg" alt="뷰티스킨 최근 20거래일 흐름" loading="lazy" /><span class="mi-related-inline-delta">+68.1%</span></div></div><div class="mi-related-inline-item"><a class="mi-related-inline-name" href="/market-intel/entities/stocks/%EB%B3%B8%EB%8A%90">본느</a><div class="mi-related-inline-spark-wrap"><img class="mi-related-inline-sparkline" src="/market-intel/assets/stock-related-sparklines/CSA%20%EC%BD%94%EC%8A%A4%EB%AF%B9/%EB%B3%B8%EB%8A%90.svg" alt="본느 최근 20거래일 흐름" loading="lazy" /><span class="mi-related-inline-delta">+22.8%</span></div></div><div class="mi-related-inline-item"><a class="mi-related-inline-name" href="/market-intel/entities/stocks/%EB%A7%88%EB%85%80%EA%B3%B5%EC%9E%A5">마녀공장</a><div class="mi-related-inline-spark-wrap"><img class="mi-related-inline-sparkline" src="/market-intel/assets/stock-related-sparklines/CSA%20%EC%BD%94%EC%8A%A4%EB%AF%B9/%EB%A7%88%EB%85%80%EA%B3%B5%EC%9E%A5.svg" alt="마녀공장 최근 20거래일 흐름" loading="lazy" /><span class="mi-related-inline-delta">+26.3%</span></div></div></div>
+
+- [[market-intel/entities/stocks/뷰티스킨|뷰티스킨]]
+- [[market-intel/entities/stocks/본느|본느]]
+- [[market-intel/entities/stocks/마녀공장|마녀공장]]
+
+## Notes
+- 2026-04-24 TOP30 importer 기준 최초 생성.
+- 2026-04-27 validated archive importer 반영.

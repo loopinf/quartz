@@ -1,0 +1,57 @@
+---
+entity_type: stock
+created_at: 2026-04-17 12:29:52 KST
+updated_at: 2026-04-17 12:34:41 KST
+name: SKC
+source_note: [[2026-04-16_top30_recap]]
+theme_tags: ["유리기판"]
+---
+
+# SKC
+
+## Overview
+- 상승률: 22.24% (2026-04-16 TOP30 기준)
+- 설명: 화학관련주, 시총4조6천억대, 이차전지&반도체소재사업, 유리기판관련주, MLCC기판 가격 상승으로 국내 기업의 유리기판 사업 진출 및 상용화 경쟁 본격화 전망
+- 리스크 플래그: 없음
+
+## Theme Tags
+- 유리기판
+
+## Event History
+- 2026-04-16: [[2026-04-16_유리기판_모멘텀]] — 2026-04-16 유리기판 모멘텀
+
+- 2026-04-16: [[market-intel/events/2026-04-16_유리기판_모멘텀|2026-04-16_유리기판_모멘텀]] — 2026-04-16 유리기판 모멘텀
+
+## Related Stocks
+<style>
+.mi-related-inline-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(220px,100%),1fr));gap:8px 12px;margin:8px 0 10px;max-width:100%;width:100%;overflow-x:clip}
+.mi-related-inline-item{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px;min-width:0;max-width:100%;box-sizing:border-box;padding:6px 8px;border:1px solid var(--lightgray);border-radius:10px;background:color-mix(in srgb, var(--light) 94%, transparent);overflow:hidden}
+.mi-related-inline-name{min-width:0;font-weight:600;text-decoration:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mi-related-inline-spark-wrap{min-width:0;max-width:100%;width:clamp(84px,30vw,132px);display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;column-gap:4px;margin-left:auto}
+.mi-related-inline-sparkline{display:block;min-width:0;width:100%;max-width:100%;height:auto;max-height:24px;opacity:.94}
+.mi-related-inline-delta{font-size:.68rem;line-height:1;color:var(--gray);white-space:nowrap}
+.mi-related-inline-list ~ ul{display:none}
+@media (max-width: 800px){
+  .mi-related-inline-list{grid-template-columns:1fr;gap:6px}
+  .mi-related-inline-item{gap:6px;padding:6px}
+  .mi-related-inline-name{font-size:.92rem}
+  .mi-related-inline-spark-wrap{width:clamp(90px,34vw,138px)}
+  .mi-related-inline-sparkline{max-height:22px}
+}
+@media (max-width: 480px){
+  .mi-related-inline-item{grid-template-columns:minmax(0,1fr);align-items:stretch;row-gap:4px}
+  .mi-related-inline-spark-wrap{width:100%;grid-template-columns:minmax(0,1fr) auto;justify-self:stretch;margin-left:0}
+  .mi-related-inline-sparkline{justify-self:stretch;width:100%;max-height:20px}
+  .mi-related-inline-delta{font-size:.64rem}
+}
+</style>
+
+<div class="mi-related-inline-list"><div class="mi-related-inline-item"><a class="mi-related-inline-name" href="/market-intel/entities/stocks/%ED%95%9C%EB%B9%9B%EB%A0%88%EC%9D%B4%EC%A0%80">한빛레이저</a><div class="mi-related-inline-spark-wrap"><img class="mi-related-inline-sparkline" src="/market-intel/assets/stock-related-sparklines/SKC/%ED%95%9C%EB%B9%9B%EB%A0%88%EC%9D%B4%EC%A0%80.svg" alt="한빛레이저 최근 20거래일 흐름" loading="lazy" /><span class="mi-related-inline-delta">+83.9%</span></div></div></div>
+
+- [[한빛레이저]]
+
+- [[market-intel/entities/stocks/한빛레이저|한빛레이저]]
+
+## Notes
+- 2026-04-16 TOP30 importer 기준 최초 생성.
+- 2026-04-16 validated archive importer 반영.

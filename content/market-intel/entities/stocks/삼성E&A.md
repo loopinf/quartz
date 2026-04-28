@@ -1,0 +1,28 @@
+---
+entity_type: stock
+created_at: 2026-04-19 13:28:02 KST
+updated_at: 2026-04-19 14:27:59 KST
+name: 삼성E&A
+source_note: [[market-intel/daily/2026-03-13_top30_recap|2026-03-13_top30_recap]]
+theme_tags: []
+---
+
+# 삼성E&A
+
+## Overview
+- 상승률: 15.53% (2026-03-13 TOP30 기준)
+- 설명: 
+- 리스크 플래그: 없음
+
+## Theme Tags
+- 
+
+## Event History
+- 2026-03-13: [[market-intel/daily/2026-03-13_top30_recap|2026-03-13_top30_recap]] — 2026-03-13 TOP30 등장
+
+## Related Stocks
+- 
+
+## Notes
+- 2026-03-13 TOP30 importer 기준 최초 생성.
+- 2026-03-13 validated archive importer 반영.
