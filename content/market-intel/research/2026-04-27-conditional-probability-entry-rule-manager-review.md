@@ -12,6 +12,15 @@ time_verification_status: confirmed
 이 페이지는 **manager가 바로 검토할 최종 surface**다.
 결론만 적지 않고, **conditional probability 계산 과정이 어떤 구조로 만들어졌고 → 어디까지 믿을 수 있고 → 아직 무엇이 production blocker인지**를 `single-axis matrix → pairwise winner map → coverage risk → audit path` 순서로 한 번에 보이게 묶었다.
 
+## Read this first — 사람말 설명 바로가기
+- 용어/약어/축 이름이 낯설면 먼저: [Conditional probability field glossary / manager explainer](/market-intel/research/conditional-probability-field-glossary)
+- 이 페이지에서 `single-axis`, `days_in_90_zone`, `event_breadth_n`, `carryover_ratio_from_prev_day`, `Sharpe20`, `usable20` 같은 표기를 전부 사람말로 풀어뒀다.
+
+## Audit status box
+- **What is being calculated?** breakout event를 여러 context axis로 bucketizing한 뒤, 각 bucket에서 entry rule별 20거래일 성과(`Sharpe20`, `usable20`)를 비교해 baseline override 후보가 있는지 본다.
+- **Where can bugs or misuse happen?** field missingness(`unknown`), bucket sparsity, rule-definition 혼동(`next_open` vs `wait_1d_close`), coverage가 낮은 축을 allocation rule처럼 과대해석하는 지점.
+- **What is the current trustable scope?** pooled baseline으로 `wait_2d_close`를 비교축으로 쓰는 것까지는 가능하지만, context-specific override를 production rule로 승인할 수준은 아직 아니다.
+
 ## One-line manager answer
 > **Use `wait_2d_close` as the current audited breakout baseline, but do not approve any context-specific override for production yet.**
 
@@ -45,7 +54,7 @@ time_verification_status: confirmed
 | `event_breadth_n` | 27,762 | 29,260 | 94.9% |
 | `carryover_ratio_from_prev_day` | 27,762 | 29,260 | 94.9% |
 
-## Review surface 2 — single-axis winner board
+## Review surface 2 — single-variable winner board (`single-axis`)
 ![single-axis winner board](/market-intel/assets/charts/high-signal-conditional-axis-winner-board.svg)
 
 | axis | bucket | winner | Sharpe20 | status |
@@ -83,8 +92,9 @@ time_verification_status: confirmed
 | `carryover_ratio_from_prev_day` | `carryover_ratio_from_prev_day=0.75_1.0` | `--` | -- | `too_sparse` |
 
 ## Single-axis condition matrix
-이 섹션은 **각 조건축별로 어떤 rule이 어디서 강한지**를 바로 보게 해준다.
+이 섹션은 **변수 하나씩 따로 잘라서(single-axis)** 어떤 rule이 어디서 강한지 보게 해준다.
 각 셀은 `Sharpe20 / usable20`이고, 테두리 색은 `promoted / exploratory / too_sparse` 상태다.
+- 용어가 헷갈리면: [field glossary](/market-intel/research/conditional-probability-field-glossary)
 
 ### signal_type
 ![signal_type heatmap](/market-intel/assets/charts/high-signal-conditional-signal-type-rule-heatmap.svg)
@@ -109,7 +119,8 @@ time_verification_status: confirmed
 
 ## Pairwise winner maps
 이 섹션은 manager가 제일 궁금해하는 **regime switch**를 보여준다.
-즉, `조건 A × 조건 B` 조합에서 pooled baseline을 실제로 뒤집는 winner가 있는지 본다.
+즉, **변수 두 개를 동시에 묶었을 때(pairwise)** pooled baseline을 실제로 뒤집는 winner가 있는지 본다.
+- 용어가 헷갈리면: [field glossary](/market-intel/research/conditional-probability-field-glossary)
 
 ### signal_type × prior_breakout_1_age_trading_days
 ![signal_type x prior_breakout_1_age_trading_days winner map](/market-intel/assets/charts/high-signal-conditional-signal-type-prior-breakout-1-age-trading-days-winner-map.svg)
