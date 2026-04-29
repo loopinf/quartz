@@ -33,7 +33,9 @@ import ipaddress
 import json
 import os
 import re
+import subprocess
 import sys
+import threading
 import urllib.error
 import urllib.request
 import uuid
@@ -53,6 +55,14 @@ DEFAULT_PARENT_CHANNEL = "1493792291150762115"
 PARENT_CHANNEL_ID = os.environ.get(
     "HERMES_DISCORD_PARENT_CHANNEL", DEFAULT_PARENT_CHANNEL
 ).strip()
+AUTO_KICKOFF_ENABLED = os.environ.get("HERMES_AUTO_KICKOFF", "1").strip().lower() not in {
+    "0",
+    "false",
+    "no",
+    "off",
+}
+AUTO_KICKOFF_TIMEOUT = int(os.environ.get("HERMES_AUTO_KICKOFF_TIMEOUT", "240"))
+AUTO_KICKOFF_COMMAND = os.environ.get("HERMES_AUTO_KICKOFF_COMMAND", "hermes").strip() or "hermes"
 
 HERMES_ENV_FILE = Path(
     os.environ.get("HERMES_ENV_FILE", str(Path.home() / ".hermes" / ".env"))
@@ -66,6 +76,7 @@ EXTRA_ALLOWED_ORIGINS = {
 
 SLUG_RE = re.compile(r"[^a-zA-Z0-9._-]+")
 DISCORD_API = "https://discord.com/api/v10"
+DISCORD_THREAD_TRACKER_PATH = Path.home() / ".hermes" / "discord_threads.json"
 
 
 def is_allowed_preview_host(hostname: str) -> bool:
@@ -163,6 +174,9 @@ def build_markdown(req: dict) -> str:
         ("discord_thread_id", req.get("discord_thread_id", "")),
         ("discord_thread_name", req.get("discord_thread_name", "")),
         ("discord_thread_url", req.get("discord_thread_url", "")),
+        ("assistant_kickoff_status", req.get("assistant_kickoff_status", "")),
+        ("assistant_kickoff_message_ids", ", ".join(req.get("assistant_kickoff_message_ids") or [])),
+        ("assistant_kickoff_completed_at", req.get("assistant_kickoff_completed_at", "")),
     ]
     lines = ["---"]
     for key, val in fields:
@@ -170,6 +184,8 @@ def build_markdown(req: dict) -> str:
     lines.append("request_text: " + yaml_escape(req.get("request_text", "")))
     if req.get("error"):
         lines.append("error: " + yaml_escape(str(req["error"])))
+    if req.get("assistant_kickoff_error"):
+        lines.append("assistant_kickoff_error: " + yaml_escape(str(req["assistant_kickoff_error"])))
     lines.append("---")
     lines.append("")
     lines.append("# Hermes discussion request")
@@ -233,6 +249,163 @@ def discord_request(method: str, path: str, token: str, body: dict | None) -> di
         raise RuntimeError(f"discord {method} {path} failed: {exc.code} {detail[:300]}")
     except urllib.error.URLError as exc:
         raise RuntimeError(f"discord {method} {path} network error: {exc}")
+
+
+def send_discord_message(token: str, thread_id: str, content: str) -> dict:
+    return discord_request(
+        "POST",
+        f"/channels/{thread_id}/messages",
+        token,
+        {"content": content[:1900]},
+    )
+
+
+def split_discord_chunks(text: str, limit: int = 1900) -> list[str]:
+    body = (text or "").strip()
+    if not body:
+        return []
+    if len(body) <= limit:
+        return [body]
+    chunks: list[str] = []
+    remaining = body
+    while remaining:
+        if len(remaining) <= limit:
+            chunks.append(remaining)
+            break
+        split_at = remaining.rfind("\n\n", 0, limit)
+        if split_at < limit // 2:
+            split_at = remaining.rfind("\n", 0, limit)
+        if split_at < limit // 2:
+            split_at = remaining.rfind(" ", 0, limit)
+        if split_at < limit // 2:
+            split_at = limit
+        chunk = remaining[:split_at].rstrip()
+        if not chunk:
+            chunk = remaining[:limit]
+            split_at = limit
+        chunks.append(chunk)
+        remaining = remaining[split_at:].lstrip()
+    return chunks
+
+
+def build_autokickoff_prompt(record: dict) -> str:
+    parts = [
+        "You are starting a brand-new Discord discussion thread for a Korean-speaking user.",
+        "Reply in Korean.",
+        "Be concise but genuinely useful.",
+        "Prefix the first line with [ㅎㅁ].",
+        "Do not mention internal tooling or that this was auto-triggered unless necessary.",
+        "Use the page context below and answer the user's request directly.",
+        "If something is uncertain, say so clearly instead of guessing.",
+        "If helpful, end with 2-4 short follow-up angles or checks.",
+        "",
+        f"Page title: {record.get('source_page_title') or '(unknown)'}",
+        f"Page path: {record.get('source_page_path') or '(unknown)'}",
+        f"Page url: {record.get('source_page_url') or '(none)'}",
+        f"Entity: {record.get('entity_type') or '?'} / {record.get('entity_name') or '?'}",
+        "",
+        "User request:",
+        record.get("request_text", "").strip() or "(empty)",
+    ]
+    return "\n".join(parts)
+
+
+def strip_hermes_cli_output(output: str) -> str:
+    lines = []
+    for raw in (output or "").splitlines():
+        line = raw.rstrip()
+        if line.startswith("session_id:"):
+            continue
+        lines.append(line)
+    return "\n".join(lines).strip()
+
+
+def run_hermes_autokickoff(record: dict) -> str:
+    prompt = build_autokickoff_prompt(record)
+    cmd = [AUTO_KICKOFF_COMMAND, "chat", "-Q", "-q", prompt]
+    proc = subprocess.run(
+        cmd,
+        cwd=str(REPO_ROOT),
+        capture_output=True,
+        text=True,
+        timeout=AUTO_KICKOFF_TIMEOUT,
+        check=False,
+    )
+    output = strip_hermes_cli_output(proc.stdout)
+    if proc.returncode != 0:
+        err = strip_hermes_cli_output(proc.stderr) or output or f"exit {proc.returncode}"
+        raise RuntimeError(f"hermes auto-kickoff failed: {err[:500]}")
+    if not output:
+        raise RuntimeError("hermes auto-kickoff returned empty output")
+    return output
+
+
+def write_audit_file(path: Path, record: dict) -> None:
+    path.write_text(build_markdown(record), encoding="utf-8")
+
+
+def mark_thread_participated(thread_id: str) -> None:
+    tid = str(thread_id or "").strip()
+    if not tid:
+        return
+    DISCORD_THREAD_TRACKER_PATH.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        if DISCORD_THREAD_TRACKER_PATH.exists():
+            current = json.loads(DISCORD_THREAD_TRACKER_PATH.read_text(encoding="utf-8"))
+            if not isinstance(current, list):
+                current = []
+        else:
+            current = []
+    except Exception:
+        current = []
+    seen = [str(item).strip() for item in current if str(item).strip()]
+    if tid not in seen:
+        seen.append(tid)
+    if len(seen) > 500:
+        seen = seen[-500:]
+    DISCORD_THREAD_TRACKER_PATH.write_text(json.dumps(seen), encoding="utf-8")
+
+
+def launch_assistant_kickoff(token: str, record: dict, audit_path: Path) -> None:
+    if not AUTO_KICKOFF_ENABLED or not record.get("discord_thread_id"):
+        return
+
+    thread_id = str(record.get("discord_thread_id") or "")
+
+    def worker() -> None:
+        local_record = dict(record)
+        local_record["assistant_kickoff_status"] = "running"
+        try:
+            reply = run_hermes_autokickoff(local_record)
+            message_ids: list[str] = []
+            for chunk in split_discord_chunks(reply):
+                posted = send_discord_message(token, thread_id, chunk)
+                msg_id = str(posted.get("id") or "").strip()
+                if msg_id:
+                    message_ids.append(msg_id)
+            local_record["assistant_kickoff_status"] = "posted"
+            local_record["assistant_kickoff_message_ids"] = message_ids
+        except Exception as exc:
+            local_record["assistant_kickoff_status"] = "failed"
+            local_record["assistant_kickoff_error"] = str(exc)
+            try:
+                send_discord_message(
+                    token,
+                    thread_id,
+                    f"[ㅎㅁ] 자동 kickoff 응답 생성에 실패했습니다. 필요하면 저를 한 번 불러주세요. (`{str(exc)[:300]}`)",
+                )
+            except Exception:
+                pass
+        finally:
+            local_record["assistant_kickoff_completed_at"] = datetime.now(timezone.utc).isoformat(
+                timespec="seconds"
+            ).replace("+00:00", "Z")
+            try:
+                write_audit_file(audit_path, local_record)
+            except OSError:
+                pass
+
+    threading.Thread(target=worker, name=f"hermes-kickoff-{thread_id}", daemon=True).start()
 
 
 def create_discord_thread(token: str, parent_channel_id: str, record: dict) -> dict:
@@ -319,6 +492,8 @@ class Handler(BaseHTTPRequestHandler):
             "preview_port": PREVIEW_PORT,
             "discord_parent_channel_id": PARENT_CHANNEL_ID,
             "discord_token_loaded": bool(load_discord_token()),
+            "auto_kickoff_enabled": AUTO_KICKOFF_ENABLED,
+            "auto_kickoff_timeout": AUTO_KICKOFF_TIMEOUT,
             "extra_allowed_origins": sorted(EXTRA_ALLOWED_ORIGINS),
         }
         self.wfile.write(json.dumps(body).encode())
@@ -371,6 +546,9 @@ class Handler(BaseHTTPRequestHandler):
             "discord_thread_id": "",
             "discord_thread_name": "",
             "discord_thread_url": "",
+            "assistant_kickoff_status": "pending" if AUTO_KICKOFF_ENABLED else "disabled",
+            "assistant_kickoff_message_ids": [],
+            "assistant_kickoff_completed_at": "",
         }
 
         thread_info: dict | None = None
@@ -380,6 +558,7 @@ class Handler(BaseHTTPRequestHandler):
             record["discord_thread_id"] = thread_info["thread_id"]
             record["discord_thread_name"] = thread_info["thread_name"]
             record["discord_thread_url"] = thread_info["thread_url"]
+            mark_thread_participated(record["discord_thread_id"])
             record["request_status"] = "thread_created"
         except Exception as exc:
             error_msg = str(exc)
@@ -391,7 +570,7 @@ class Handler(BaseHTTPRequestHandler):
         filename = f"{request_id}_{slug}.md"
         target = INBOX_DIR / filename
         try:
-            target.write_text(build_markdown(record), encoding="utf-8")
+            write_audit_file(target, record)
         except OSError as exc:
             if not error_msg:
                 error_msg = f"failed to write audit file: {exc}"
@@ -411,6 +590,8 @@ class Handler(BaseHTTPRequestHandler):
                     "path": rel,
                 },
             )
+
+        launch_assistant_kickoff(token, record, target)
 
         self._json(
             200,
@@ -449,6 +630,10 @@ def main():
     )
     print(
         f"[hermes-inbox] discord parent_channel={PARENT_CHANNEL_ID} token_loaded={token_loaded}",
+        flush=True,
+    )
+    print(
+        f"[hermes-inbox] auto_kickoff enabled={AUTO_KICKOFF_ENABLED} timeout={AUTO_KICKOFF_TIMEOUT}s command={AUTO_KICKOFF_COMMAND}",
         flush=True,
     )
     try:

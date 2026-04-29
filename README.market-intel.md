@@ -30,8 +30,9 @@ This Quartz site publishes the Obsidian vault folder `market-intel/` as a browse
     1. Posts a starter message in the configured Discord parent channel,
     2. Creates a brand new public thread off that starter,
     3. Posts a kickoff message inside the new thread with full page context + the user's request,
-    4. Writes an auditable markdown record (including `discord_thread_id` / `discord_thread_url`) into `content/market-intel/hermes-inbox/`.
-  - Reads `DISCORD_BOT_TOKEN` from `~/.hermes/.env` (override via env). Parent channel is configurable via `HERMES_DISCORD_PARENT_CHANNEL` (default `1493792291150762115`). No cron, no automatic note finalization.
+    4. Generates and posts the first Hermes reply automatically in that new thread,
+    5. Writes an auditable markdown record (including `discord_thread_id` / `discord_thread_url` and auto-kickoff status) into `content/market-intel/hermes-inbox/`.
+  - Reads `DISCORD_BOT_TOKEN` from `~/.hermes/.env` (override via env). Parent channel is configurable via `HERMES_DISCORD_PARENT_CHANNEL` (default `1493792291150762115`). Auto-kickoff is on by default and can be disabled with `HERMES_AUTO_KICKOFF=0`. No cron, no automatic note finalization.
 - Build static site only:
   - `./scripts/sync-market-intel.sh && npx quartz build -d content`
 
