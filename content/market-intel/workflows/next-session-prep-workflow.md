@@ -251,6 +251,17 @@ prep note는 최소 아래 provenance 필드를 유지한다.
 ### 11. One-line prep
 - manager-facing 요약 한 줄
 
+### 12. Follow-up note / paired review handoff
+- prep는 ex-ante anchor임을 다시 명시
+- paired review note 경로를 남긴다
+- review/replay는 별도 문서에서 처리한다고 못박는다
+
+### 13. Review request scaffold
+- `My review notes`
+- `Hermes review request`
+- `review_request_status`
+- `paired_review_target`
+
 ---
 
 ## Automation rule
@@ -259,6 +270,8 @@ prep note는 최소 아래 provenance 필드를 유지한다.
 - priority names에 연결되는 stock entity가 있으면 `entity_inputs`를 frontmatter에 남긴다.
 - 본문에 `Entity memory check`와 `Related stocks expansion check`를 자동 scaffold로 추가한다.
 - 단, entity는 **memory lookup only**라는 guardrail 문장을 함께 넣는다.
+- prep 하단에 `Follow-up note` / `My review notes` / `Hermes review request` scaffold를 같이 남긴다.
+- 가능하면 같은 날짜의 paired review stub도 같이 생성하되, same-day actual recap은 live wikilink로 미리 걸지 말고 placeholder text로 둔다.
 
 즉 자동화 목표는:
 - wiki를 예쁘게 쌓는 것
@@ -280,6 +293,18 @@ prep note는 최소 아래 provenance 필드를 유지한다.
 - entity 링크가 하나도 없는데 workflow만 entity-first라고 써둔 경우
 - entity를 근거처럼 쓰지만 recap/event/high-signal 출처가 없는 경우
 - related stocks를 priority bucket으로 승격시켰는데 why-now가 없는 경우
+
+---
+
+## Review / replay boundary for entity graph
+paired review에서도 entity graph는 무제한으로 쓰지 않는다.
+- `prep review` 단계에서는 **prep cutoff 이전에 이미 knowable했던 graph**만 검토 대상으로 삼는다.
+- later-enriched entity 문장이나 post-close에 추가된 event/entity link는 hindsight layer로 분리 표기한다.
+- review note의 verdict는 여전히 recap / event proof / high-signal fact layer로 역추적 가능해야 한다.
+- 짧게 말하면:
+  - `prep = proof lookup + memory lookup`
+  - `prep review = knowable graph boundary audit`
+  - `post-close replay = hindsight extension, but clearly labeled`
 
 ---
 

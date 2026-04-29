@@ -264,6 +264,19 @@ def stock_entity_path(vault_market_intel: Path, name: str) -> Path:
     return vault_market_intel / "entities" / "stocks" / f"{name}.md"
 
 
+def review_note_slug(target_date: date) -> str:
+    return f"replay-{target_date:%Y-%m-%d}-next-session-prep"
+
+
+def review_note_link(target_date: date) -> str:
+    slug = review_note_slug(target_date)
+    return f"[[market-intel/research/{slug}|{slug}]]"
+
+
+def review_note_path(vault_market_intel: Path, target_date: date) -> Path:
+    return vault_market_intel / "research" / f"{review_note_slug(target_date)}.md"
+
+
 def parse_entity_memory(vault_market_intel: Path, name: str) -> EntityMemory | None:
     path = stock_entity_path(vault_market_intel, name)
     if not path.exists():
@@ -308,6 +321,14 @@ def build_entity_inputs(context: PrepContext) -> list[str]:
         if path.exists():
             outputs.append(f"market-intel/entities/stocks/{name}.md")
     return outputs[:10]
+
+
+def build_related_entity_links(context: PrepContext) -> list[str]:
+    links: list[str] = []
+    for item in build_entity_inputs(context):
+        name = Path(item).stem
+        links.append(stock_entity_link(name))
+    return links
 
 
 def render_entity_memory_sections(context: PrepContext, primary_names: list[str], expansion_names: list[str], residual_names: list[str]) -> list[str]:
@@ -416,6 +437,154 @@ def build_supporting_notes(context: PrepContext) -> list[str]:
         if note not in deduped:
             deduped.append(note)
     return deduped
+
+
+def render_follow_up_sections(context: PrepContext) -> list[str]:
+    paired_review = review_note_link(context.target_date)
+    return [
+        "## Follow-up note",
+        f"- 이 문서는 `{context.target_date:%Y-%m-%d}` 장전 대응을 위한 **ex-ante hypothesis artifact**다.",
+        "- actual vs hypothesis 비교, 질문 수정, replay/review는 별도 review 문서에서 처리한다.",
+        f"- paired review: {paired_review}",
+        "",
+        "## My review notes",
+        "- thesis_push:",
+        "- disagreement_or_risk:",
+        "- missing_piece:",
+        "- open_question:",
+        "",
+        "## Hermes review request",
+        "- review_request_status: not_requested",
+        "- requested_at_kst:",
+        "- focus_question:",
+        f"- paired_review_target: {paired_review}",
+    ]
+
+
+def build_review_stub_content(context: PrepContext) -> str:
+    created_at = fmt_ts()
+    source_links = [
+        f'"[[market-intel/daily/{context.target_date:%Y-%m-%d}_next-session-prep|{context.target_date:%Y-%m-%d}_next-session-prep]]"',
+        f'"[[market-intel/daily/{context.base_date:%Y-%m-%d}_top30_recap|{context.base_date:%Y-%m-%d}_top30_recap]]"',
+        f'"[[market-intel/daily/{context.base_date:%Y-%m-%d}_evening-briefing-input|{context.base_date:%Y-%m-%d}_evening-briefing-input]]"',
+    ]
+    if context.briefing_path:
+        source_links.append(f'"[[market-intel/daily/{context.base_date:%Y-%m-%d}_evening-briefing|{context.base_date:%Y-%m-%d}_evening-briefing]]"')
+    related_events = [f'"{event_link(slug)}"' for slug in context.event_slugs[:5]]
+    related_entities = [f'"{link}"' for link in build_related_entity_links(context)[:8]]
+    lines = [
+        "---",
+        f"id: {review_note_slug(context.target_date)}",
+        "note_type: predictive_replay",
+        f"created_at: {created_at}",
+        f"updated_at: {created_at}",
+        f"event_date: {context.target_date:%Y-%m-%d}",
+        f"review_date: {context.target_date:%Y-%m-%d}",
+        "reviewer: 헤르메스(ㅎㅁ)",
+        "region: KR",
+        "session_relation: kr_preopen",
+        "review_mode: prep_review",
+        "review_request_status: not_requested",
+        "entity_review_scope: prep_known_graph_only",
+        f"source_prep: [[market-intel/daily/{context.target_date:%Y-%m-%d}_next-session-prep|{context.target_date:%Y-%m-%d}_next-session-prep]]",
+        f"source_links: [{', '.join(source_links)}]",
+        "user_opinion_captured: false",
+        'focus_question: ""',
+        'review_scope: ["prep thesis", "priority names", "invalidation logic", "entity graph boundary"]',
+        f"related_events: [{', '.join(related_events)}]" if related_events else "related_events: []",
+        f"related_entities: [{', '.join(related_entities)}]" if related_entities else "related_entities: []",
+        'pattern_labels: ["prep_review", "entity_boundary_check"]',
+        f'summary: "{context.target_date:%Y-%m-%d} prep에 대한 paired review workspace. prep anchor는 유지하고, review/replay/entity boundary 판단은 이 문서에서 분리한다."',
+        "---",
+        "",
+        f"# {review_note_slug(context.target_date)}",
+        "",
+        "## Why this review exists",
+        f"- 이 노트는 [[market-intel/daily/{context.target_date:%Y-%m-%d}_next-session-prep|{context.target_date:%Y-%m-%d}_next-session-prep]]에 붙는 paired review다.",
+        "- 목적은 prep 본문을 hindsight로 오염시키지 않으면서, 사용자 의견 / Hermes 검토 / 이후 replay를 분리 저장하는 것이다.",
+        "",
+        "## Review request snapshot",
+        "- requested_at_kst:",
+        "- requested_by: user",
+        "- review_request_status: not_requested",
+        "- focus_question:",
+        "- review_scope:",
+        "  - prep thesis",
+        "  - carry-over themes",
+        "  - priority names / sectors",
+        "  - invalidation conditions",
+        "  - entity graph boundary",
+        "",
+        "## User opinion snapshot",
+        "> prep note의 `My review notes`를 그대로 옮기거나 요약.",
+        "",
+        "- thesis_push:",
+        "- disagreement_or_risk:",
+        "- missing_piece:",
+        "- open_question:",
+        "",
+        "## What was knowable at review time?",
+        "- 이 review note는 `prep_review` 용도다.",
+        "- pre-open 검토 기준으로는 same-session outcome을 넣지 않는다.",
+        "- post-close replay를 이어 붙일 경우 아래 `Optional post-close replay extension`부터 시점을 분리한다.",
+        "",
+        "## Entity graph usage boundary",
+        "- prep에서 entity는 **proof lookup이 아니라 memory lookup**이다.",
+        "- pre-open review에서는 prep cutoff 이전에 이미 존재했고, prior recap / prior event proof / same-window high-signal로 역추적 가능한 entity 정보만 검토 근거로 쓴다.",
+        "- later-enriched entity 문구나 post-close에 추가된 link는 hindsight 레이어로 분리 표기한다.",
+        "",
+        "## Hermes review verdict",
+        "### 1. Agree",
+        "- ",
+        "",
+        "### 2. Tighten / revise",
+        "- ",
+        "",
+        "### 3. Missing checks",
+        "- ",
+        "",
+        "### 4. Overreach / unsupported claims",
+        "- ",
+        "",
+        "## Revised operating view",
+        "### Base case",
+        "- ",
+        "",
+        "### Alternate case",
+        "- ",
+        "",
+        "### What would change my mind",
+        "- ",
+        "",
+        "## Suggested edits back to prep",
+        "- prep 본문을 직접 오염시키지 않는 범위에서, 남겨도 되는 수정만 적는다.",
+        "- 예:",
+        "  - one-line prep 문장 정교화",
+        "  - priority bucket 재배치",
+        "  - invalidation 조건 문구 강화",
+        "  - supporting link 추가",
+        "",
+        "## Optional post-close replay extension",
+        "### Actual outcome",
+        "- ",
+        "",
+        "### What was right",
+        "- ",
+        "",
+        "### What was missed",
+        "- ",
+        "",
+        "### Rule / workflow update",
+        "- ",
+        "",
+        "## Links",
+        f"- prep note: [[market-intel/daily/{context.target_date:%Y-%m-%d}_next-session-prep|{context.target_date:%Y-%m-%d}_next-session-prep]]",
+        f"- actual recap (fill after close when created): `{context.target_date:%Y-%m-%d}_top30_recap`",
+        f"- prior recap anchor: [[market-intel/daily/{context.base_date:%Y-%m-%d}_top30_recap|{context.base_date:%Y-%m-%d}_top30_recap]]",
+        f"- close input: [[market-intel/daily/{context.base_date:%Y-%m-%d}_evening-briefing-input|{context.base_date:%Y-%m-%d}_evening-briefing-input]]",
+        "- workflow template: [[market-intel/workflows/next-session-prep-paired-review-template|next-session-prep-paired-review-template]]",
+    ]
+    return "\n".join(lines).rstrip() + "\n"
 
 
 def render_frontmatter(context: PrepContext) -> str:
@@ -578,6 +747,8 @@ def build_content(context: PrepContext) -> str:
         "## Guardrail",
         "- 이 문서는 prior-close-only scaffold다.",
         "- 실제 결과 비교와 회고는 별도 replay/review 문서로 넘긴다.",
+        "",
+        *render_follow_up_sections(context),
     ])
     return "\n".join(lines).rstrip() + "\n"
 
@@ -600,6 +771,13 @@ def main() -> int:
     content = build_content(context)
     context.existing_path.parent.mkdir(parents=True, exist_ok=True)
     context.existing_path.write_text(content, encoding="utf-8")
+    review_path = review_note_path(vault_market_intel, target_date)
+    review_path.parent.mkdir(parents=True, exist_ok=True)
+    if args.overwrite or not review_path.exists():
+        review_path.write_text(build_review_stub_content(context), encoding="utf-8")
+        print(f"WROTE_REVIEW {review_path}")
+    else:
+        print(f"SKIP_REVIEW existing {review_path}")
     print(f"WROTE {context.existing_path}")
     print(f"TARGET_DATE {target_date:%Y-%m-%d}")
     print(f"BASE_DATE {context.base_date:%Y-%m-%d}")
