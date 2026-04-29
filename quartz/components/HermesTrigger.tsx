@@ -13,6 +13,7 @@ const HermesTrigger: QuartzComponent = ({ fileData, displayClass }: QuartzCompon
   const sourceNote = String(frontmatter.source_note ?? "")
   const updatedAt = String(frontmatter.updated_at ?? frontmatter.modified ?? "")
   const slug = String(fileData.slug ?? "")
+  const entityName = String(frontmatter.name ?? frontmatter.title ?? "")
 
   if (!pageName || !slug) {
     return null
@@ -28,6 +29,7 @@ const HermesTrigger: QuartzComponent = ({ fileData, displayClass }: QuartzCompon
       data-theme-tags={themeTags}
       data-source-note={sourceNote}
       data-updated-at={updatedAt}
+      data-entity-name={entityName}
     >
       <div class="hermes-trigger-card-header">
         <div>
@@ -62,6 +64,38 @@ const HermesTrigger: QuartzComponent = ({ fileData, displayClass }: QuartzCompon
           복사 실패 시 아래 내용을 직접 복사해서 붙여 넣으면 됩니다.
         </p>
         <textarea class="hermes-trigger-output-textarea" readonly rows={14}></textarea>
+      </div>
+
+      <div class="hermes-trigger-stage2" data-hermes-stage2>
+        <div class="hermes-trigger-card-header">
+          <div>
+            <p class="hermes-trigger-eyebrow">Hermes 토론 요청</p>
+            <h2>이 페이지로 새 Discord 스레드 만들기</h2>
+          </div>
+          <span class="hermes-trigger-badge hermes-trigger-badge-stage2">step 2</span>
+        </div>
+        <p class="hermes-trigger-body">
+          현재 페이지 컨텍스트와 입력한 질문으로 <strong>새 Discord 토론 스레드</strong>를 즉시
+          생성합니다. 기존 채널/스레드에는 글이 올라가지 않고, 항상 이 요청 전용 스레드가 새로
+          만들어집니다. 동시에 <code>content/market-intel/hermes-inbox/</code>에 감사용 마크다운이
+          저장됩니다. 로컬 헬퍼(<code>scripts/hermes_inbox_server.py</code>)가 켜져 있어야 합니다.
+        </p>
+        <textarea
+          class="hermes-trigger-stage2-textarea"
+          rows={5}
+          placeholder="여기에 질문/의견을 적어주세요. 페이지 컨텍스트는 자동으로 붙습니다."
+          data-hermes-stage2-input
+        ></textarea>
+        <div class="hermes-trigger-actions">
+          <button
+            type="button"
+            class="hermes-trigger-button hermes-trigger-button-primary"
+            data-hermes-stage2-submit
+          >
+            새 Discord 스레드 만들기
+          </button>
+        </div>
+        <p class="hermes-trigger-feedback" data-hermes-stage2-feedback aria-live="polite"></p>
       </div>
 
       <details class="hermes-trigger-details">
@@ -207,6 +241,28 @@ HermesTrigger.css = `
 
 .hermes-trigger-details ul {
   margin: 0.55rem 0 0 1.1rem;
+}
+
+.hermes-trigger-stage2 {
+  display: grid;
+  gap: 0.6rem;
+  padding-top: 0.85rem;
+  border-top: 1px dashed var(--lightgray);
+}
+
+.hermes-trigger-stage2-textarea {
+  width: 100%;
+  resize: vertical;
+  border-radius: 12px;
+  border: 1px solid var(--lightgray);
+  background: color-mix(in srgb, var(--light) 97%, transparent);
+  color: var(--dark);
+  font: 0.92rem/1.45 var(--bodyFont);
+  padding: 0.7rem;
+}
+
+.hermes-trigger-badge-stage2 {
+  background: color-mix(in srgb, #2b8a3e 22%, var(--light) 78%);
 }
 
 @media (max-width: 700px) {

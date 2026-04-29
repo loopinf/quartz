@@ -71,15 +71,115 @@ function buildPrompt(card: HTMLElement, template: string) {
     .join("\n")
 }
 
+const HERMES_INBOX_ENDPOINT = "http://127.0.0.1:8765/api/hermes-request"
+
+async function submitStage2Request(card: HTMLElement, text: string) {
+  const payload = {
+    source_page_title: card.dataset.pageName ?? "",
+    source_page_path: card.dataset.pageSlug ?? "",
+    source_page_url: window.location.href,
+    entity_type: card.dataset.entityType ?? "",
+    entity_name: card.dataset.entityName ?? card.dataset.pageName ?? "",
+    request_text: text,
+  }
+  const res = await fetch(HERMES_INBOX_ENDPOINT, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  })
+  const body = (await res.json().catch(() => ({}))) as Record<string, unknown>
+  if (!res.ok || !body.ok) {
+    const reason = typeof body.error === "string" ? body.error : `HTTP ${res.status}`
+    throw new Error(reason)
+  }
+  return body as {
+    request_id: string
+    path: string
+    discord_thread_id?: string
+    discord_thread_url?: string
+    discord_thread_name?: string
+  }
+}
+
+function bindStage2(card: HTMLElement) {
+  const stage2 = card.querySelector("[data-hermes-stage2]") as HTMLElement | null
+  if (!stage2) return
+  const input = stage2.querySelector("[data-hermes-stage2-input]") as HTMLTextAreaElement | null
+  const submit = stage2.querySelector("[data-hermes-stage2-submit]") as HTMLButtonElement | null
+  const feedback = stage2.querySelector("[data-hermes-stage2-feedback]") as HTMLElement | null
+  if (!input || !submit) return
+  if (submit.dataset.hermesBound === "1") return
+  submit.dataset.hermesBound = "1"
+
+  const setFeedback = (msg: string, kind: "success" | "error" | "info") => {
+    if (!feedback) return
+    feedback.textContent = msg
+    feedback.classList.remove("is-success", "is-error")
+    if (kind === "success") feedback.classList.add("is-success")
+    if (kind === "error") feedback.classList.add("is-error")
+  }
+
+  const onClick = async () => {
+    const text = (input.value ?? "").trim()
+    if (!text) {
+      setFeedback("질문/의견을 먼저 입력해주세요.", "error")
+      input.focus()
+      return
+    }
+    submit.disabled = true
+    setFeedback("새 Discord 스레드를 만드는 중…", "info")
+    try {
+      const result = await submitStage2Request(card, text)
+      if (result.discord_thread_url) {
+        if (feedback) {
+          feedback.classList.remove("is-error")
+          feedback.classList.add("is-success")
+          feedback.textContent = ""
+          const lead = document.createElement("span")
+          lead.textContent = "새 Discord 스레드 생성 완료 → "
+          const link = document.createElement("a")
+          link.href = result.discord_thread_url
+          link.target = "_blank"
+          link.rel = "noopener noreferrer"
+          link.textContent = result.discord_thread_name || result.discord_thread_id || "thread"
+          feedback.appendChild(lead)
+          feedback.appendChild(link)
+          const audit = document.createElement("span")
+          audit.textContent = ` (audit: ${result.path})`
+          feedback.appendChild(audit)
+        }
+      } else {
+        setFeedback(`요청 처리됨 (audit: ${result.path})`, "success")
+      }
+      input.value = ""
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : String(error)
+      setFeedback(
+        `Discord 스레드 생성 실패 (${reason}). 로컬 헬퍼가 켜져 있고 DISCORD_BOT_TOKEN이 설정되어 있는지 확인해주세요: python3 scripts/hermes_inbox_server.py`,
+        "error",
+      )
+    } finally {
+      submit.disabled = false
+    }
+  }
+
+  submit.addEventListener("click", onClick)
+  // @ts-ignore Quartz injects addCleanup on window for SPA navigation cleanup.
+  window.addCleanup(() => submit.removeEventListener("click", onClick))
+}
+
 document.addEventListener("nav", () => {
   document.querySelectorAll("[data-hermes-trigger-card]").forEach((card) => {
     const element = card as HTMLElement
-    const feedback = element.querySelector(".hermes-trigger-feedback") as HTMLElement | null
+    const feedback = element.querySelector(
+      ".hermes-trigger-feedback:not([data-hermes-stage2-feedback])",
+    ) as HTMLElement | null
     const output = element.querySelector(".hermes-trigger-output") as HTMLElement | null
     const textarea = element.querySelector(
       ".hermes-trigger-output-textarea",
     ) as HTMLTextAreaElement | null
     const buttons = element.querySelectorAll("[data-hermes-template]")
+    bindStage2(element)
 
     buttons.forEach((button) => {
       const htmlButton = button as HTMLButtonElement
