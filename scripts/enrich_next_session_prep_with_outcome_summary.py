@@ -9,6 +9,8 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
+from ensure_next_session_prep import build_context, build_entity_inputs, limited_members, render_entity_memory_sections
+
 KST = ZoneInfo("Asia/Seoul")
 OUTCOME_DIR = Path("/Users/gbserver/repos/jmkr_kj/data/signals/high-signal-entry-outcomes")
 RULE_ORDER = [
@@ -51,6 +53,66 @@ def choose_target_date(raw: str | None) -> date:
         return date.fromisoformat(raw)
     now = datetime.now(KST)
     return next_trading_day(now.date()) if market_phase(now) == "장후" else now.date()
+
+
+def top_level_key(line: str) -> bool:
+    return bool(line) and not line.startswith((" ", "	", "-")) and ":" in line
+
+
+def sync_entity_inputs_frontmatter(note_text: str, entity_inputs: list[str]) -> str:
+    lines = note_text.splitlines()
+    if not lines or lines[0].strip() != "---":
+        return note_text
+    closing = None
+    for idx in range(1, len(lines)):
+        if lines[idx].strip() == "---":
+            closing = idx
+            break
+    if closing is None:
+        return note_text
+    block = ["entity_inputs:"]
+    if entity_inputs:
+        block.extend(f"  - {item}" for item in entity_inputs)
+    else:
+        block.append("  - []")
+    existing = None
+    for idx in range(1, closing):
+        if lines[idx].strip() == "entity_inputs:":
+            end = idx + 1
+            while end < closing and (lines[end].startswith("  ") or lines[end].startswith("	")):
+                end += 1
+            existing = (idx, end)
+            break
+    if existing:
+        start, end = existing
+        lines = lines[:start] + block + lines[end:]
+    else:
+        insert_at = next((idx for idx in range(1, closing) if lines[idx].startswith("reviewer:")), closing)
+        lines = lines[:insert_at] + block + lines[insert_at:]
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def inject_entity_sections(note_text: str, context) -> str:
+    lines = note_text.splitlines()
+    if section_range(lines, "Entity memory check") is not None:
+        return note_text
+    top_clusters = context.theme_clusters
+    primary = top_clusters[:2]
+    expansion = top_clusters[2:4]
+    residual = top_clusters[4:6]
+    primary_names = [name for cluster in primary for name in limited_members(cluster, 4)]
+    expansion_names = [name for cluster in expansion for name in limited_members(cluster, 3)]
+    residual_names = [name for cluster in residual for name in limited_members(cluster, 2)]
+    if len(residual_names) < 4:
+        residual_names.extend(context.ungrouped_names[: max(0, 4 - len(residual_names))])
+    entity_lines = render_entity_memory_sections(context, primary_names, expansion_names, residual_names)
+    insert_before = section_range(lines, "신고가 / high-signal 팩트층") or section_range(lines, "Carry-over themes 선정 근거")
+    if insert_before:
+        start, _ = insert_before
+        lines = lines[:start] + entity_lines + [""] + lines[start:]
+    else:
+        lines.extend(["", *entity_lines])
+    return "\n".join(lines).rstrip() + "\n"
 
 
 def section_range(lines: list[str], heading: str) -> tuple[int, int] | None:
@@ -201,12 +263,13 @@ def build_section(note_text: str) -> str:
             out.append(
                 f"- interpretation: 전구간 breakout baseline에선 `{top['entry_rule']}`가 현재 audited default comparison anchor이고, conditional override는 아직 `exploratory` 단계다."
             )
-            out.append("- review links:")
-            out.append("  - [[market-intel/research/2026-04-27-conditional-probability-entry-rule-manager-review|Conditional probability calculation audit / manager review]]")
-            out.append("  - [[market-intel/research/wait-2d-close-review|Entry-rule calculation audit (worked example: wait_2d_close)]]")
+            out.append("- review paths by reader intent:")
+            out.append("  - `raw rule table / worked example`: [[market-intel/research/wait-2d-close-review|Entry-rule calculation audit (worked example: wait_2d_close)]]")
+            out.append("  - `conditional manager review`: [[market-intel/research/2026-04-27-conditional-probability-entry-rule-manager-review|Conditional probability calculation audit / manager review]]")
+            out.append("  - `field glossary / explainer`: [[market-intel/research/conditional-probability-field-glossary|Conditional probability field glossary]]")
             out.append("- direct result shortcuts:")
-            out.append("  - local: [conditional probability calculation audit](http://127.0.0.1:8081/market-intel/research/2026-04-27-conditional-probability-entry-rule-manager-review) / [entry-rule calculation audit worked example](http://127.0.0.1:8081/market-intel/research/wait-2d-close-review)")
-            out.append("  - tailscale: [conditional probability calculation audit](http://gbs-mac-mini.taila43069.ts.net:8081/market-intel/research/2026-04-27-conditional-probability-entry-rule-manager-review) / [entry-rule calculation audit worked example](http://gbs-mac-mini.taila43069.ts.net:8081/market-intel/research/wait-2d-close-review)")
+            out.append("  - local: [raw rule table / worked example](http://127.0.0.1:8081/market-intel/research/wait-2d-close-review) / [conditional manager review](http://127.0.0.1:8081/market-intel/research/2026-04-27-conditional-probability-entry-rule-manager-review) / [field glossary / explainer](http://127.0.0.1:8081/market-intel/research/conditional-probability-field-glossary)")
+            out.append("  - tailscale: [raw rule table / worked example](http://gbs-mac-mini.taila43069.ts.net:8081/market-intel/research/wait-2d-close-review) / [conditional manager review](http://gbs-mac-mini.taila43069.ts.net:8081/market-intel/research/2026-04-27-conditional-probability-entry-rule-manager-review) / [field glossary / explainer](http://gbs-mac-mini.taila43069.ts.net:8081/market-intel/research/conditional-probability-field-glossary)")
             cluster = [f"`{item['entry_rule']}`" for item in ranked[:4] if item.get("entry_rule") != top["entry_rule"]]
             if cluster:
                 out.append(
@@ -302,6 +365,14 @@ def main() -> int:
         print(f"SKIP missing {prep_path}")
         return 0
     text = prep_path.read_text(encoding="utf-8")
+    try:
+        context = build_context(Path(args.vault_path).expanduser().resolve() / "market-intel", target_date)
+    except (FileNotFoundError, RuntimeError) as exc:
+        print(f"SKIP entity-context {prep_path}: {exc}")
+        context = None
+    if context is not None:
+        text = sync_entity_inputs_frontmatter(text, build_entity_inputs(context))
+        text = inject_entity_sections(text, context)
     section = build_section(text)
     if not section:
         print(f"SKIP no-high-signal-section {prep_path}")

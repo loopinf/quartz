@@ -5,7 +5,6 @@ import argparse
 import ast
 import json
 import re
-import subprocess
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from pathlib import Path
@@ -15,8 +14,8 @@ KST = ZoneInfo("Asia/Seoul")
 WEEKDAY_KO = ["월", "화", "수", "목", "금", "토", "일"]
 DOMINANT_THEME_RE = re.compile(r"^-\s+([^:]+):\s+(\d+)개\s+\((.*)\)\s*$")
 LINK_RE = re.compile(r"\[\[(?:[^\]|]+/)?([^\]|]+)(?:\|[^\]]+)?\]\]")
+ENTITY_LINK_RE = re.compile(r"\[\[market-intel/entities/stocks/([^\]|]+)(?:\|[^\]]+)?\]\]")
 HIGH_SIGNAL_DIR = Path("/Users/gbserver/repos/jmkr_kj/data/signals/high-signals")
-HIGH_SIGNAL_SCRIPT = Path("/Users/gbserver/repos/jmkr_kj/scripts/export_high_signal_snapshot.py")
 
 
 @dataclass(frozen=True)
@@ -27,16 +26,6 @@ class ThemeCluster:
 
 
 @dataclass(frozen=True)
-class HighSignalOverlap:
-    breakout_overlap: list[str]
-    near_high_overlap: list[str]
-    technical_support_names: list[str]
-    generated_days: list[str]
-    missing_days: list[str]
-    empty_days: list[str]
-
-
-@dataclass(frozen=True)
 class RecentRecap:
     day: date
     path: Path
@@ -44,7 +33,17 @@ class RecentRecap:
 
 
 @dataclass(frozen=True)
+class EntityMemory:
+    name: str
+    path: Path
+    theme_tags: list[str]
+    event_history: list[str]
+    related_stocks: list[str]
+
+
+@dataclass(frozen=True)
 class PrepContext:
+    vault_market_intel: Path
     target_date: date
     base_date: date
     recap_path: Path
@@ -228,88 +227,6 @@ def has_same_window_high_signal(recent_recaps: list[RecentRecap]) -> bool:
     return False
 
 
-def ensure_high_signal_snapshot(day: date) -> tuple[Path | None, str | None]:
-    path = HIGH_SIGNAL_DIR / f"{day:%Y-%m-%d}.json"
-    if path.exists():
-        return path, None
-    if not HIGH_SIGNAL_SCRIPT.exists():
-        return None, f"script_missing:{day:%Y-%m-%d}"
-    try:
-        subprocess.run(
-            ["python3", str(HIGH_SIGNAL_SCRIPT), "--date", f"{day:%Y-%m-%d}", "--top", "5000"],
-            cwd=str(HIGH_SIGNAL_SCRIPT.parent.parent),
-            check=True,
-            capture_output=True,
-            text=True,
-        )
-    except subprocess.CalledProcessError as exc:
-        return None, f"generate_failed:{day:%Y-%m-%d}:{exc.returncode}"
-    return (path, None) if path.exists() else (None, f"missing_after_generate:{day:%Y-%m-%d}")
-
-
-def _dedupe_keep_order(items: list[str]) -> list[str]:
-    seen: set[str] = set()
-    out: list[str] = []
-    for item in items:
-        if item in seen:
-            continue
-        seen.add(item)
-        out.append(item)
-    return out
-
-
-def collect_high_signal_overlap(recent_recaps: list[RecentRecap], carry_names: set[str]) -> HighSignalOverlap:
-    breakout_overlap: list[str] = []
-    near_high_overlap: list[str] = []
-    technical_support: list[str] = []
-    generated_days: list[str] = []
-    missing_days: list[str] = []
-    empty_days: list[str] = []
-
-    for row in recent_recaps:
-        snapshot_path, error = ensure_high_signal_snapshot(row.day)
-        if error or snapshot_path is None:
-            missing_days.append(f"{row.day:%Y-%m-%d}")
-            continue
-        generated_days.append(f"{row.day:%Y-%m-%d}")
-        try:
-            payload = json.loads(snapshot_path.read_text(encoding="utf-8"))
-        except Exception:
-            missing_days.append(f"{row.day:%Y-%m-%d}")
-            continue
-
-        states = payload.get("states", {}) or {}
-        events = payload.get("events", {}) or {}
-        state_rows = [item for rows in states.values() for item in rows]
-        event_rows = [item for rows in events.values() for item in rows]
-        if not state_rows and not event_rows:
-            empty_days.append(f"{row.day:%Y-%m-%d}")
-            continue
-
-        for signal_type, rows in events.items():
-            for item in rows:
-                name = item.get("stock_name")
-                if name in carry_names:
-                    breakout_overlap.append(f"{name} ({row.day:%m/%d}, {signal_type})")
-                    technical_support.append(f"{name} ({row.day:%m/%d}, breakout)")
-
-        for signal_type, rows in states.items():
-            for item in rows:
-                name = item.get("stock_name")
-                if name in carry_names and signal_type.startswith("near_"):
-                    near_high_overlap.append(f"{name} ({row.day:%m/%d}, {signal_type})")
-                    technical_support.append(f"{name} ({row.day:%m/%d}, near-high)")
-
-    return HighSignalOverlap(
-        breakout_overlap=_dedupe_keep_order(breakout_overlap),
-        near_high_overlap=_dedupe_keep_order(near_high_overlap),
-        technical_support_names=_dedupe_keep_order(technical_support),
-        generated_days=_dedupe_keep_order(generated_days),
-        missing_days=_dedupe_keep_order(missing_days),
-        empty_days=_dedupe_keep_order(empty_days),
-    )
-
-
 def join_themes_for_sentence(clusters: list[ThemeCluster], limit: int = 3) -> str:
     names = [cluster.name for cluster in clusters[:limit]]
     if not names:
@@ -339,6 +256,116 @@ def weekday_label(day: date) -> str:
     return f"{WEEKDAY_KO[day.weekday()]}요일"
 
 
+def stock_entity_link(name: str) -> str:
+    return f"[[market-intel/entities/stocks/{name}|{name}]]"
+
+
+def stock_entity_path(vault_market_intel: Path, name: str) -> Path:
+    return vault_market_intel / "entities" / "stocks" / f"{name}.md"
+
+
+def parse_entity_memory(vault_market_intel: Path, name: str) -> EntityMemory | None:
+    path = stock_entity_path(vault_market_intel, name)
+    if not path.exists():
+        return None
+    text = path.read_text(encoding="utf-8")
+    theme_tags = [line.strip()[2:].strip() for line in section_lines(text, "Theme Tags") if line.strip().startswith("- ")]
+    event_history = [line.strip()[2:].strip() for line in section_lines(text, "Event History") if line.strip().startswith("- ")]
+    related_stocks: list[str] = []
+    for raw_line in section_lines(text, "Related Stocks"):
+        match = ENTITY_LINK_RE.search(raw_line)
+        if not match:
+            continue
+        related_name = match.group(1).strip()
+        if related_name == name or related_name in related_stocks:
+            continue
+        related_stocks.append(related_name)
+    return EntityMemory(
+        name=name,
+        path=path,
+        theme_tags=theme_tags,
+        event_history=event_history,
+        related_stocks=related_stocks,
+    )
+
+
+def unique_preserve_order(names: list[str]) -> list[str]:
+    out: list[str] = []
+    for name in names:
+        if name and name not in out:
+            out.append(name)
+    return out
+
+
+def build_entity_inputs(context: PrepContext) -> list[str]:
+    candidate_names: list[str] = []
+    for cluster in context.theme_clusters[:3]:
+        candidate_names.extend(limited_members(cluster, 3))
+    candidate_names.extend(context.ungrouped_names[:2])
+    outputs: list[str] = []
+    for name in unique_preserve_order(candidate_names):
+        path = stock_entity_path(context.vault_market_intel, name)
+        if path.exists():
+            outputs.append(f"market-intel/entities/stocks/{name}.md")
+    return outputs[:10]
+
+
+def render_entity_memory_sections(context: PrepContext, primary_names: list[str], expansion_names: list[str], residual_names: list[str]) -> list[str]:
+    lines = [
+        "## Entity memory check",
+        "- 이 섹션에서 entity는 **독립 근거가 아니라 graph memory / expansion lookup** 역할이다.",
+        "- 따라서 prep의 핵심 주장 자체는 prior recap / prior event proof / same-window technical layer에서 시작하고, entity는 반복 등장 맥락과 related stocks 확장 후보를 확인하는 보조 기억층으로만 쓴다.",
+        "",
+    ]
+    grouped_candidates = [
+        ("A. leader entity memory", primary_names[:4]),
+        ("B. expansion entity memory", expansion_names[:4]),
+        ("C. residual / re-check entity memory", residual_names[:3]),
+    ]
+    any_group = False
+    aggregated_related: dict[str, list[str]] = {"leader": [], "expansion": [], "residual": []}
+    bucket_map = {
+        "A. leader entity memory": "leader",
+        "B. expansion entity memory": "expansion",
+        "C. residual / re-check entity memory": "residual",
+    }
+    for title, names in grouped_candidates:
+        memories = [parse_entity_memory(context.vault_market_intel, name) for name in unique_preserve_order(names)]
+        memories = [memory for memory in memories if memory is not None]
+        if not memories:
+            continue
+        any_group = True
+        lines.append(f"### {title}")
+        bucket = bucket_map[title]
+        for memory in memories:
+            tags = ", ".join(f"`{tag}`" for tag in memory.theme_tags[:3]) if memory.theme_tags else "theme tag unavailable"
+            latest_event = memory.event_history[0] if memory.event_history else "event history unavailable"
+            related_links = ", ".join(stock_entity_link(name) for name in memory.related_stocks[:3]) if memory.related_stocks else "related stocks link unavailable"
+            lines.append(f"- {stock_entity_link(memory.name)} — theme tags: {tags}")
+            lines.append(f"  - latest entity memory: {latest_event}")
+            lines.append(f"  - related stocks expansion check: {related_links}")
+            lines.append(f"  - provenance rule: 이 entity 정보는 [[{context.recap_path.stem}]] / prior event proof / high-signal fact layer와 같이 읽을 때만 prep 판단 근거가 된다.")
+            for related_name in memory.related_stocks[:4]:
+                if related_name not in aggregated_related[bucket]:
+                    aggregated_related[bucket].append(related_name)
+        lines.append("")
+
+    if not any_group:
+        lines.append("- 현재 priority names와 직접 연결되는 stock entity page를 찾지 못했다. 이 경우 prep는 recap/event/high-signal만으로 작성하고 entity gap을 후속 보강한다.")
+        return lines
+
+    lines.extend([
+        "## Related stocks expansion check",
+        "- 아래 이름들은 priority entity page의 `Related Stocks`에서 끌어온 **확장 관찰 후보**다.",
+        "- 메인 leader가 살아 있을 때만 2차 확산 후보로 점검하고, entity 링크만 보고 독립 진입 후보로 격상하지 않는다.",
+    ])
+    for label, key in [("leader-linked names", "leader"), ("expansion-linked names", "expansion"), ("residual / re-check linked names", "residual")]:
+        related_names = aggregated_related[key][:6]
+        rendered = ", ".join(stock_entity_link(name) for name in related_names) if related_names else "없음"
+        lines.append(f"- {label}: {rendered}")
+    return lines
+
+
 def build_context(vault_market_intel: Path, target_date: date) -> PrepContext:
     daily_dir = vault_market_intel / "daily"
     base_date = previous_trading_day(target_date)
@@ -364,6 +391,7 @@ def build_context(vault_market_intel: Path, target_date: date) -> PrepContext:
     event_slugs = parse_event_slugs(recap_text, base_date)
     recent_recaps = collect_recent_validated_recaps(daily_dir, base_date, limit=5)
     return PrepContext(
+        vault_market_intel=vault_market_intel,
         target_date=target_date,
         base_date=base_date,
         recap_path=recap_path,
@@ -392,7 +420,8 @@ def build_supporting_notes(context: PrepContext) -> list[str]:
 
 def render_frontmatter(context: PrepContext) -> str:
     supporting_notes = ", ".join(f'"{item}"' for item in build_supporting_notes(context))
-    return "\n".join([
+    entity_inputs = build_entity_inputs(context)
+    lines = [
         "---",
         f"id: next-session-prep-{context.target_date:%Y-%m-%d}",
         "note_type: next_session_prep",
@@ -401,12 +430,20 @@ def render_frontmatter(context: PrepContext) -> str:
         f"session_date: {context.target_date:%Y-%m-%d}",
         f"source_note: {context.recap_path.stem}",
         f"supporting_notes: [{supporting_notes}]",
+        "entity_inputs:",
+    ]
+    if entity_inputs:
+        lines.extend(f"  - {item}" for item in entity_inputs)
+    else:
+        lines.append("  - []")
+    lines.extend([
         "reviewer: 헤르메스(ㅎㅁ)",
         "generation_mode: auto_prior_close_scaffold",
         "source_scope: prior_close_only",
         "same_day_intraday_excluded: true",
         "---",
     ])
+    return "\n".join(lines)
 
 
 def build_content(context: PrepContext) -> str:
@@ -420,8 +457,6 @@ def build_content(context: PrepContext) -> str:
     if len(residual_names) < 4:
         residual_names.extend(context.ungrouped_names[: max(0, 4 - len(residual_names))])
     recurrence = theme_recurrence_count(context.recent_recaps)
-    carry_names = {name for cluster in top_clusters[:6] for name in cluster.members}
-    overlap = collect_high_signal_overlap(context.recent_recaps, carry_names)
 
     lines: list[str] = [
         render_frontmatter(context),
@@ -431,7 +466,7 @@ def build_content(context: PrepContext) -> str:
         "## Why this note exists",
         f"- 이 문서는 **{context.target_date:%Y-%m-%d} {weekday_label(context.target_date)} 장전 대응 문서**다.",
         f"- 기준 close는 `{context.base_date:%Y-%m-%d}`이고, 따라서 이 노트 안에서 `오늘`은 **{context.target_date:%Y-%m-%d} KST pre-open**을 뜻한다.",
-        "- 이 문서는 `validated recap + close input + 저장된 최근 며칠 graph`를 종합한 prior-close-only scaffold이며, same-day intraday/close 정보는 포함하지 않는다.",
+        "- 이 문서는 `validated recap + close input + prior event proof + stock entity memory + 저장된 최근 며칠 graph`를 종합한 prior-close-only scaffold이며, same-day intraday/close 정보는 포함하지 않는다.",
         f"- 장마감 정리는 {note_link(context.recap_path.stem)}에, 장전 실행 포인트는 이 문서에 분리한다.",
         "",
         "## Recent 5 trading days synthesized context",
@@ -457,31 +492,14 @@ def build_content(context: PrepContext) -> str:
         lines.append(f"- 동시에 `{second.name}`가 보조/공동 주도축으로 붙는지 확인해야 하며, 대표 종목은 {', '.join(limited_members(second, 3))}다.")
     lines.append("- 전날 하루만 보는 게 아니라, 최근 5거래일 정리 데이터에서 `집중 -> 분산 -> 재선별` 흐름이 어떻게 이어졌는지 위 기준선 위에서 판단한다.")
 
-    lines.extend(["", "## 신고가 / high-signal 팩트층"])
-    if overlap.generated_days:
-        lines.append(f"- recent 5거래일 window high-signal snapshot 확보: {', '.join(overlap.generated_days)}")
-    if overlap.missing_days:
-        lines.append(f"- snapshot 생성/확인 실패 날짜: {', '.join(overlap.missing_days)}")
-    if overlap.empty_days:
-        lines.append(f"- stock_prices.db 기준 high-signal 결과가 비어 있는 날짜: {', '.join(overlap.empty_days)}")
-    if overlap.breakout_overlap:
-        lines.append("- breakout overlap 종목")
-        lines.extend(f"  - {item}" for item in overlap.breakout_overlap[:12])
+    lines.extend(["", *render_entity_memory_sections(context, primary_names, expansion_names, residual_names), "", "## 신고가 / high-signal 팩트층"])
+    if has_same_window_high_signal(context.recent_recaps):
+        lines.append("- 최근 5거래일 구간 안에 로컬 high-signal snapshot이 존재한다. carry-over 후보와의 overlap은 별도 high-signal 자동 연결 단계에서 끌어와야 한다.")
     else:
-        lines.append("- breakout overlap 종목: 없음")
-    if overlap.near_high_overlap:
-        lines.append("- near-52w-high / near-ATH overlap 종목")
-        lines.extend(f"  - {item}" for item in overlap.near_high_overlap[:12])
-    else:
-        lines.append("- near-52w-high / near-ATH overlap 종목: 없음")
-    if overlap.technical_support_names:
-        lines.append("- carry-over theme와 겹치는 technical support names")
-        lines.extend(f"  - {item}" for item in overlap.technical_support_names[:12])
-    else:
-        lines.append("- carry-over theme와 겹치는 technical support names: 없음")
+        lines.append("- 현재 로컬 기준 최근 5거래일 구간에는 exact-date high-signal snapshot이 없다.")
     lines.extend([
-        "- 해석 규칙: breakout overlap은 강한 기술적 확인, near-high overlap은 후속 추세 후보, 둘 다 없으면 recap/이벤트 기반 해석 우선으로 본다.",
-        "- 즉 이 섹션은 단순 참고가 아니라 carry-over 후보 중 기술적으로 받쳐주는 이름을 장전 전에 걸러내는 층이다.",
+        "- 따라서 이번 prep은 특정 종목을 `신고가/high-signal confirmed`로 단정하지 않고, **validated recap 기반 군집 연속성 + 최근 5거래일 반복 등장 + leader breadth**를 우선 근거로 쓴다.",
+        "- high-signal overlap이 있는 이름은 carry-over theme 선정 근거와 함께 읽어야 한다.",
     ])
 
     lines.extend(["", "## Carry-over themes 선정 근거"])
@@ -576,11 +594,8 @@ def main() -> int:
         return 0
 
     if context.existing_path.exists() and not args.overwrite:
-        existing_text = context.existing_path.read_text(encoding="utf-8")
-        existing_frontmatter = parse_frontmatter(existing_text)
-        if existing_frontmatter.get("generation_mode") != "auto_prior_close_scaffold":
-            print(f"SKIP existing {context.existing_path}")
-            return 0
+        print(f"SKIP existing {context.existing_path}")
+        return 0
 
     content = build_content(context)
     context.existing_path.parent.mkdir(parents=True, exist_ok=True)

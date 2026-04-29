@@ -2,7 +2,7 @@
 id: next-session-prep-2026-04-29
 note_type: next_session_prep
 created_at: 2026-04-28 18:40:39 KST
-updated_at: 2026-04-29 06:08:30 KST
+updated_at: 2026-04-29 12:38:39 KST
 session_date: 2026-04-29
 source_note: 2026-04-28_top30_recap
 supporting_notes:
@@ -16,6 +16,15 @@ supporting_notes:
   - 2026-04-28_철강_모멘텀
   - 2026-04-28_강관_모멘텀
   - 2026-04-28_퓨리오사AI_모멘텀
+entity_inputs:
+  - market-intel/entities/stocks/문배철강.md
+  - market-intel/entities/stocks/대호특수강.md
+  - market-intel/entities/stocks/아주스틸.md
+  - market-intel/entities/stocks/넥스틸.md
+  - market-intel/entities/stocks/휴스틸.md
+  - market-intel/entities/stocks/하이스틸.md
+  - market-intel/entities/stocks/나우IB.md
+  - market-intel/entities/stocks/DSC인베스트먼트.md
 reviewer: 헤르메스(ㅎㅁ)
 generation_mode: upgraded_prior_close_scaffold
 source_scope: prior_close_only
@@ -161,6 +170,45 @@ excluded_sources:
   - 04/27의 디스플레이·로봇·광통신 분산 장세와 달리, 04/28은 더 **한 방향 cluster 집중도**가 강했다.
   - 최근 5거래일 반복축인 반도체소부장/로봇은 완전히 사라진 게 아니라, **04/28의 철강 집중이 하루짜리 과열인지 구조적 재집중인지**를 판단할 대조군으로 남는다.
 
+## Entity memory check
+- 이 섹션에서 entity는 **독립 근거가 아니라 graph memory / expansion lookup** 역할이다.
+- 따라서 prep의 핵심 주장 자체는 prior recap / prior event proof / same-window technical layer에서 시작하고, entity는 반복 등장 맥락과 related stocks 확장 후보를 확인하는 보조 기억층으로만 쓴다.
+
+### A. leader entity memory
+- [[market-intel/entities/stocks/문배철강|문배철강]] — theme tags: `철강`
+  - latest entity memory: 2026-04-28: [[market-intel/events/2026-04-28_철강_모멘텀|2026-04-28_철강_모멘텀]] — 2026-04-28 철강 모멘텀
+  - related stocks expansion check: [[market-intel/entities/stocks/대호특수강|대호특수강]], [[market-intel/entities/stocks/아주스틸|아주스틸]], [[market-intel/entities/stocks/포스코스틸리온|포스코스틸리온]]
+  - provenance rule: 이 entity 정보는 [[2026-04-28_top30_recap]] / prior event proof / high-signal fact layer와 같이 읽을 때만 prep 판단 근거가 된다.
+- [[market-intel/entities/stocks/대호특수강|대호특수강]] — theme tags: `철강`
+  - latest entity memory: 2026-04-28: [[market-intel/events/2026-04-28_철강_모멘텀|2026-04-28_철강_모멘텀]] — 2026-04-28 철강 모멘텀
+  - related stocks expansion check: [[market-intel/entities/stocks/문배철강|문배철강]], [[market-intel/entities/stocks/아주스틸|아주스틸]], [[market-intel/entities/stocks/포스코스틸리온|포스코스틸리온]]
+  - provenance rule: 이 entity 정보는 [[2026-04-28_top30_recap]] / prior event proof / high-signal fact layer와 같이 읽을 때만 prep 판단 근거가 된다.
+- [[market-intel/entities/stocks/아주스틸|아주스틸]] — theme tags: `철강`
+  - latest entity memory: 2026-04-28: [[market-intel/events/2026-04-28_철강_모멘텀|2026-04-28_철강_모멘텀]] — 2026-04-28 철강 모멘텀
+  - related stocks expansion check: [[market-intel/entities/stocks/문배철강|문배철강]], [[market-intel/entities/stocks/대호특수강|대호특수강]], [[market-intel/entities/stocks/포스코스틸리온|포스코스틸리온]]
+  - provenance rule: 이 entity 정보는 [[2026-04-28_top30_recap]] / prior event proof / high-signal fact layer와 같이 읽을 때만 prep 판단 근거가 된다.
+- [[market-intel/entities/stocks/포스코스틸리온|포스코스틸리온]] — theme tags: `금속&데이터센터`, `철강`
+  - latest entity memory: 2026-04-27: [[market-intel/daily/2026-04-27_top30_recap|2026-04-27_top30_recap]] — 2026-04-27 TOP30 등장
+  - related stocks expansion check: [[market-intel/entities/stocks/문배철강|문배철강]], [[market-intel/entities/stocks/대호특수강|대호특수강]], [[market-intel/entities/stocks/아주스틸|아주스틸]]
+  - provenance rule: 이 entity 정보는 [[2026-04-28_top30_recap]] / prior event proof / high-signal fact layer와 같이 읽을 때만 prep 판단 근거가 된다.
+
+### B. expansion entity memory
+- [[market-intel/entities/stocks/나우IB|나우IB]] — theme tags: `양자/양자암호`, `퓨리오사AI`
+  - latest entity memory: 2026-04-16: [[2026-04-16_양자-양자암호_모멘텀]] — 2026-04-16 양자/양자암호 모멘텀
+  - related stocks expansion check: [[market-intel/entities/stocks/케이씨에스|케이씨에스]], [[market-intel/entities/stocks/무림P&P|무림P&P]], [[market-intel/entities/stocks/파인텍|파인텍]]
+  - provenance rule: 이 entity 정보는 [[2026-04-28_top30_recap]] / prior event proof / high-signal fact layer와 같이 읽을 때만 prep 판단 근거가 된다.
+- [[market-intel/entities/stocks/DSC인베스트먼트|DSC인베스트먼트]] — theme tags: `퓨리오사AI`
+  - latest entity memory: 2026-04-28: [[market-intel/events/2026-04-28_퓨리오사AI_모멘텀|2026-04-28_퓨리오사AI_모멘텀]] — 2026-04-28 퓨리오사AI 모멘텀
+  - related stocks expansion check: [[market-intel/entities/stocks/나우IB|나우IB]]
+  - provenance rule: 이 entity 정보는 [[2026-04-28_top30_recap]] / prior event proof / high-signal fact layer와 같이 읽을 때만 prep 판단 근거가 된다.
+
+## Related stocks expansion check
+- 아래 이름들은 priority entity page의 `Related Stocks`에서 끌어온 **확장 관찰 후보**다.
+- 메인 leader가 살아 있을 때만 2차 확산 후보로 점검하고, entity 링크만 보고 독립 진입 후보로 격상하지 않는다.
+- leader-linked names: [[market-intel/entities/stocks/대호특수강|대호특수강]], [[market-intel/entities/stocks/아주스틸|아주스틸]], [[market-intel/entities/stocks/포스코스틸리온|포스코스틸리온]], [[market-intel/entities/stocks/금강철강|금강철강]], [[market-intel/entities/stocks/문배철강|문배철강]]
+- expansion-linked names: [[market-intel/entities/stocks/케이씨에스|케이씨에스]], [[market-intel/entities/stocks/무림P&P|무림P&P]], [[market-intel/entities/stocks/파인텍|파인텍]], [[market-intel/entities/stocks/이노뎁|이노뎁]], [[market-intel/entities/stocks/나우IB|나우IB]]
+- residual / re-check linked names: 없음
+
 ## 신고가 / high-signal 팩트층
 - exact-date review window에서 로컬 snapshot은 `2026-04-24`, `2026-04-27`, `2026-04-28` 파일을 확인했다. `2026-04-22`, `2026-04-23` snapshot은 현재 로컬 확인 범위에 없어서, 기술 팩트층은 **확인된 snapshot 기준**으로만 적는다.
 - 04/28 carry-over 후보와 snapshot overlap:
@@ -250,3 +298,16 @@ excluded_sources:
 ## Follow-up note
 - 이 문서는 `2026-04-29` 장전에 무엇을 봤어야 하는지 남기는 **ex-ante hypothesis artifact**다.
 - actual vs hypothesis 비교, 질문 수정, replay/review는 별도 review 문서에서 처리한다.
+- paired review: [[market-intel/research/replay-2026-04-29-next-session-prep|replay-2026-04-29-next-session-prep]]
+
+## My review notes
+- thesis_push:
+- disagreement_or_risk:
+- missing_piece:
+- open_question:
+
+## Hermes review request
+- review_request_status: requested
+- requested_at_kst: 2026-04-29 12:38
+- focus_question: 이 prep의 base case / priority / invalidation이 과도하게 단선적인지, 아니면 장전 observation bucket으로 충분히 분리되어 있는지 검토.
+- paired_review_target: [[market-intel/research/replay-2026-04-29-next-session-prep|replay-2026-04-29-next-session-prep]]
