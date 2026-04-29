@@ -46,10 +46,40 @@ excluded_sources:
 # 2026-04-29 Next Session Prep
 
 ## Executive summary
-- **Base case**: 04/28의 철강/강관 집중이 하루짜리 과열이 아니라 `집중형 리더 재선별`인지 장초에 먼저 확인한다.
-- **Top watch**: 철강 leader 유지 → 강관 공동 주도 확장 → 퓨리오사AI 보조 확산 순서로 본다.
-- **Open check**: 거래대금 leader 유지 / breadth 확장 / 집중 유지 vs 재분산 판별.
-- **Invalidation**: 철강 상위주가 gap-only로 끝나고, 강관 breadth가 안 붙고, 최근 반복축(반도체소부장·로봇·디스플레이/광통신)이 더 빨리 복귀하면 메인 시나리오를 낮춘다.
+- **Base case**: 04/28의 철강/강관 집중은 `전일 급등 섹터 재추격`보다 **장초 leader 유지 확인 후 따라가는 continuation 후보**로 해석한다.
+- **Primary stance**: today opening bias는 `철강 long-biased, 단 gap-only 추격 금지`다.
+- **Secondary stance**: 강관은 철강이 유지될 때만 **공동 주도 / 확장축**으로 붙여 본다.
+- **Fallback stance**: 최근 반복축(반도체소부장·로봇·디스플레이/광통신)은 **지금 당장 선진입**보다, 철강 집중 실패 시 다시 올라오는지 보는 `wait / re-check bucket`이다.
+- **Invalidation**: 철강 상위주가 gap-only로 끝나고, 강관 breadth가 안 붙고, 최근 반복축이 더 빨리 복귀하면 메인 시나리오를 낮춘다.
+
+## Rough positioning calls
+### A. 철강 — `enter candidate / confirmation needed`
+- **Bias**: 오늘 장전 기준 가장 먼저 진입을 고려할 수 있는 메인 후보군.
+- **Why**: 04/28 validated recap에서 **철강 10개로 최상위 breadth**였고, breakout/near-high overlap도 다수 확인됐다.
+- **Trigger**: 문배철강·아주스틸·부국철강·TCC스틸 등 상위주가 시초 이후에도 거래대금 leader로 남고, 철강 breadth가 빠르게 무너지지 않을 때.
+- **Failure**: 장초 갭만 만들고 바로 밀리거나, leader가 한두 종목으로 급격히 줄어들 때.
+- **Rough action**: `섹터 전체 무지성 매수`가 아니라 **leader 유지 확인형 진입 후보**로 본다.
+
+### B. 강관 — `add-on candidate / steel confirmation trade`
+- **Bias**: 철강이 맞을 때 같이 붙는 확장축. 철강보다 한 단계 뒤의 후보.
+- **Why**: 04/28 recap에서 4개 cluster로 분리됐고, 넥스틸·휴스틸 breakout / 하이스틸·세아제강 near-high 계층이 겹친다.
+- **Trigger**: 철강 leader 유지 + 강관 names의 breadth 동반 확장.
+- **Failure**: 철강이 꺾이는데 강관만 일부 종목 강세로 남는 경우.
+- **Rough action**: 철강 continuation이 확인될 때만 **확장축 동반 진입 검토**.
+
+### C. 퓨리오사AI — `small expansion check`
+- **Bias**: 메인 베팅축이 아니라 attention spillover / 보조 확산 후보.
+- **Why**: breadth는 작지만 나우IB breakout, DSC인베스트먼트 near-high가 있어 기술 팩트층은 존재한다.
+- **Trigger**: 철강 과열 구간에서 attention이 AI 투자연결 고리로 일부 분산될 때.
+- **Failure**: 거래대금 상위 확장을 만들지 못할 때.
+- **Rough action**: **소형 확인형**만 가능하고, opening primary bet으로 보지는 않는다.
+
+### D. 최근 반복축(반도체소부장·로봇·디스플레이/광통신) — `wait / re-check`
+- **Bias**: 최근 5거래일의 누적축이지만, 04/28 기준 주도권을 뺏긴 상태라 장전 즉시진입보다는 대기 우선.
+- **Why**: 04/22~04/24 반도체소부장 반복, 04/27 로봇/디스플레이/광통신 분산은 의미 있지만, 직전일 breadth는 철강/강관이 압도했다.
+- **Trigger**: 철강/강관 집중 실패 후 장초부터 거래대금 상위로 복귀할 때.
+- **Failure**: 철강이 유지되는데도 재분산 후보가 상대강도를 회복하지 못할 때.
+- **Rough action**: `예전에 강했으니 지금 사자`가 아니라 **메인 시나리오 실패 시 재점검할 대기축**으로 둔다.
 
 ## Open checklist
 1. **철강 상위주가 gap-only가 아니라 시초 이후 거래대금 leader로 유지되는지** 확인
@@ -81,7 +111,7 @@ excluded_sources:
 - 최근 5거래일의 분산 축이 장초부터 더 강하게 복귀하면, 04/28의 집중형 철강 군집은 **지속 구조보다 하루성 재집중**으로 재평가한다.
 
 ## One-line prep
-**2026-04-29 장전의 기본 시나리오는 04/28 철강/강관 집중이 최근 5거래일의 분산 국면을 끝내는 재선별인지 먼저 확인하고, 실패 시엔 퓨리오사AI 보조 확산과 반도체소부장·로봇 재분산 가능성까지 동시에 열어두는 것이다.**
+**2026-04-29 장전의 기본 포지셔닝은 `철강은 leader 유지 확인형 진입 후보`, `강관은 철강 확인 시 붙는 확장축`, `퓨리오사AI는 소형 보조확산 후보`, `반도체소부장·로봇·디스플레이/광통신은 철강 실패 시 다시 보는 wait/re-check 축`으로 정리된다.**
 
 <details><summary>Rendered shortcuts</summary>
 
