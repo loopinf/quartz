@@ -1,6 +1,9 @@
 import { PageLayout, SharedLayout } from "./quartz/cfg"
 import * as Component from "./quartz/components"
-import { MARKET_INTEL_EXPLORER_KEEP_ENTRIES, MARKET_INTEL_EXPLORER_LABELS } from "./market-intel-current"
+import {
+  MARKET_INTEL_EXPLORER_KEEP_ENTRIES,
+  MARKET_INTEL_EXPLORER_LABELS,
+} from "./market-intel-current"
 
 const marketIntelExplorerFilterFn = new Function(
   "node",
@@ -45,6 +48,14 @@ export const defaultContentPageLayout: PageLayout = {
     }),
     Component.ArticleTitle(),
     Component.ContentMeta(),
+    Component.ConditionalRender({
+      component: Component.HermesTrigger(),
+      condition: (page) => {
+        const entityType = page.fileData.frontmatter?.entity_type
+        const slug = page.fileData.slug ?? ""
+        return Boolean(entityType && slug.startsWith("market-intel/entities/"))
+      },
+    }),
     Component.TagList(),
   ],
   left: [
