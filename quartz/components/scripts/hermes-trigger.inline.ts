@@ -71,7 +71,21 @@ function buildPrompt(card: HTMLElement, template: string) {
     .join("\n")
 }
 
-const HERMES_INBOX_ENDPOINT = "http://127.0.0.1:8765/api/hermes-request"
+function resolveHelperOrigin(card: HTMLElement) {
+  const explicitOrigin = (card.dataset.hermesEndpointOrigin ?? "").trim().replace(/\/$/, "")
+  if (explicitOrigin) {
+    return explicitOrigin
+  }
+
+  const protocol = window.location.protocol === "https:" ? "https:" : "http:"
+  const host = window.location.hostname || "127.0.0.1"
+  const port = (card.dataset.hermesEndpointPort ?? "8765").trim() || "8765"
+  return `${protocol}//${host}:${port}`
+}
+
+function resolveHermesInboxEndpoint(card: HTMLElement) {
+  return `${resolveHelperOrigin(card)}/api/hermes-request`
+}
 
 async function submitStage2Request(card: HTMLElement, text: string) {
   const payload = {
@@ -82,7 +96,7 @@ async function submitStage2Request(card: HTMLElement, text: string) {
     entity_name: card.dataset.entityName ?? card.dataset.pageName ?? "",
     request_text: text,
   }
-  const res = await fetch(HERMES_INBOX_ENDPOINT, {
+  const res = await fetch(resolveHermesInboxEndpoint(card), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -155,7 +169,7 @@ function bindStage2(card: HTMLElement) {
     } catch (error) {
       const reason = error instanceof Error ? error.message : String(error)
       setFeedback(
-        `Discord 스레드 생성 실패 (${reason}). 로컬 헬퍼가 켜져 있고 DISCORD_BOT_TOKEN이 설정되어 있는지 확인해주세요: python3 scripts/hermes_inbox_server.py`,
+        `Discord 스레드 생성 실패 (${reason}). helper가 실행 중인지 확인해주세요: python3 scripts/hermes_inbox_server.py (로컬은 localhost, 모바일/Tailscale은 같은 Mac의 8765 helper에 연결됩니다)`,
         "error",
       )
     } finally {

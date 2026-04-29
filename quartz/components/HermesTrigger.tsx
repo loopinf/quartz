@@ -30,6 +30,7 @@ const HermesTrigger: QuartzComponent = ({ fileData, displayClass }: QuartzCompon
       data-source-note={sourceNote}
       data-updated-at={updatedAt}
       data-entity-name={entityName}
+      data-hermes-endpoint-port="8765"
     >
       <div class="hermes-trigger-stage2 hermes-trigger-stage2-primary" data-hermes-stage2>
         <div class="hermes-trigger-card-header">
@@ -43,7 +44,8 @@ const HermesTrigger: QuartzComponent = ({ fileData, displayClass }: QuartzCompon
           현재 페이지 컨텍스트와 입력한 질문으로 <strong>새 Discord 토론 스레드</strong>를 즉시
           생성합니다. 기존 채널/스레드에는 글이 올라가지 않고, 항상 이 요청 전용 스레드가 새로
           만들어집니다. 동시에 <code>content/market-intel/hermes-inbox/</code>에 감사용 마크다운이
-          저장됩니다. 로컬 헬퍼(<code>scripts/hermes_inbox_server.py</code>)가 켜져 있어야 합니다.
+          저장됩니다. 로컬/Tailscale에서 이 페이지를 열었다면 같은 Mac에서
+          <code>scripts/hermes_inbox_server.py</code>가 켜져 있어야 합니다.
         </p>
         <textarea
           class="hermes-trigger-stage2-textarea"

@@ -12,19 +12,24 @@ Stage-3 behavior:
   thread id / url.
 
 Bind:
-- 127.0.0.1 only. No auth.
+- Configurable via HERMES_INBOX_BIND (default 0.0.0.0 for local/Tailscale/mobile access).
+- No auth. CORS is limited to Quartz preview origins on the configured preview port.
 
 Run:
     python3 scripts/hermes_inbox_server.py
 Optional env:
     HERMES_INBOX_PORT (default 8765)
+    HERMES_INBOX_BIND (default 0.0.0.0; use 127.0.0.1 for local-only)
+    HERMES_PREVIEW_PORT (default 8081)
     HERMES_INBOX_DIR  (default <repo>/content/market-intel/hermes-inbox)
     HERMES_DISCORD_PARENT_CHANNEL (default 1493792291150762115)
+    HERMES_INBOX_ALLOWED_ORIGINS (comma-separated explicit extra origins)
     HERMES_ENV_FILE   (default ~/.hermes/.env, used to read DISCORD_BOT_TOKEN)
     DISCORD_BOT_TOKEN (overrides .env if set)
 """
 from __future__ import annotations
 
+import ipaddress
 import json
 import os
 import re
@@ -35,11 +40,14 @@ import uuid
 from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from urllib.parse import urlparse
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_INBOX = REPO_ROOT / "content" / "market-intel" / "hermes-inbox"
 INBOX_DIR = Path(os.environ.get("HERMES_INBOX_DIR", str(DEFAULT_INBOX)))
 PORT = int(os.environ.get("HERMES_INBOX_PORT", "8765"))
+BIND_HOST = os.environ.get("HERMES_INBOX_BIND", "0.0.0.0").strip() or "0.0.0.0"
+PREVIEW_PORT = int(os.environ.get("HERMES_PREVIEW_PORT", "8081"))
 
 DEFAULT_PARENT_CHANNEL = "1493792291150762115"
 PARENT_CHANNEL_ID = os.environ.get(
@@ -50,13 +58,51 @@ HERMES_ENV_FILE = Path(
     os.environ.get("HERMES_ENV_FILE", str(Path.home() / ".hermes" / ".env"))
 )
 
-ALLOWED_ORIGINS = {
-    "http://127.0.0.1:8081",
-    "http://localhost:8081",
+EXTRA_ALLOWED_ORIGINS = {
+    item.strip().rstrip("/")
+    for item in os.environ.get("HERMES_INBOX_ALLOWED_ORIGINS", "").split(",")
+    if item.strip()
 }
 
 SLUG_RE = re.compile(r"[^a-zA-Z0-9._-]+")
 DISCORD_API = "https://discord.com/api/v10"
+
+
+def is_allowed_preview_host(hostname: str) -> bool:
+    host = (hostname or "").strip().lower().rstrip(".")
+    if not host:
+        return False
+    if host in {"localhost", "127.0.0.1", "::1"}:
+        return True
+    if host.endswith(".local"):
+        return True
+    try:
+        ip = ipaddress.ip_address(host)
+    except ValueError:
+        return False
+    if ip.is_private or ip.is_loopback:
+        return True
+    tailscale_cgnat = ipaddress.ip_network("100.64.0.0/10")
+    return ip in tailscale_cgnat
+
+
+def cors_allow_origin(origin: str | None) -> str:
+    candidate = (origin or "").strip().rstrip("/")
+    if not candidate:
+        return f"http://127.0.0.1:{PREVIEW_PORT}"
+    if candidate in EXTRA_ALLOWED_ORIGINS:
+        return candidate
+    try:
+        parsed = urlparse(candidate)
+    except ValueError:
+        return f"http://127.0.0.1:{PREVIEW_PORT}"
+    if parsed.scheme not in {"http", "https"}:
+        return f"http://127.0.0.1:{PREVIEW_PORT}"
+    if not parsed.hostname or parsed.port != PREVIEW_PORT:
+        return f"http://127.0.0.1:{PREVIEW_PORT}"
+    if is_allowed_preview_host(parsed.hostname):
+        return candidate
+    return f"http://127.0.0.1:{PREVIEW_PORT}"
 
 
 def slugify(value: str, fallback: str) -> str:
@@ -241,7 +287,7 @@ class Handler(BaseHTTPRequestHandler):
         sys.stderr.write("[hermes-inbox] " + (fmt % args) + "\n")
 
     def _cors(self, origin: str | None):
-        allow = origin if origin in ALLOWED_ORIGINS else "http://127.0.0.1:8081"
+        allow = cors_allow_origin(origin)
         self.send_header("Access-Control-Allow-Origin", allow)
         self.send_header("Vary", "Origin")
         self.send_header("Access-Control-Allow-Headers", "Content-Type")
@@ -264,8 +310,12 @@ class Handler(BaseHTTPRequestHandler):
         body = {
             "ok": True,
             "inbox": str(INBOX_DIR),
+            "bind_host": BIND_HOST,
+            "port": PORT,
+            "preview_port": PREVIEW_PORT,
             "discord_parent_channel_id": PARENT_CHANNEL_ID,
             "discord_token_loaded": bool(load_discord_token()),
+            "extra_allowed_origins": sorted(EXTRA_ALLOWED_ORIGINS),
         }
         self.wfile.write(json.dumps(body).encode())
 
@@ -383,10 +433,14 @@ class Handler(BaseHTTPRequestHandler):
 
 def main():
     INBOX_DIR.mkdir(parents=True, exist_ok=True)
-    server = ThreadingHTTPServer(("127.0.0.1", PORT), Handler)
+    server = ThreadingHTTPServer((BIND_HOST, PORT), Handler)
     token_loaded = bool(load_discord_token())
     print(
-        f"[hermes-inbox] listening on http://127.0.0.1:{PORT} -> {INBOX_DIR}",
+        f"[hermes-inbox] listening on http://{BIND_HOST}:{PORT} -> {INBOX_DIR}",
+        flush=True,
+    )
+    print(
+        f"[hermes-inbox] preview origins: localhost/loopback/private IPs on port {PREVIEW_PORT}; extra={sorted(EXTRA_ALLOWED_ORIGINS)}",
         flush=True,
     )
     print(
