@@ -23,6 +23,12 @@ interface RenderComponents {
 }
 
 const headerRegex = new RegExp(/h[1-6]/)
+const quartzBuildId = process.env.QUARTZ_BUILD_ID ?? Date.now().toString(36)
+
+function versionedScriptPath(baseDir: FullSlug | RelativeURL, scriptName: string) {
+  return `${joinSegments(baseDir, scriptName)}?v=${quartzBuildId}`
+}
+
 export function pageResources(
   baseDir: FullSlug | RelativeURL,
   staticResources: StaticResources,
@@ -39,7 +45,7 @@ export function pageResources(
     ],
     js: [
       {
-        src: joinSegments(baseDir, "prescript.js"),
+        src: versionedScriptPath(baseDir, "prescript.js"),
         loadTime: "beforeDOMReady",
         contentType: "external",
       },
@@ -55,7 +61,7 @@ export function pageResources(
   }
 
   resources.js.push({
-    src: joinSegments(baseDir, "postscript.js"),
+    src: versionedScriptPath(baseDir, "postscript.js"),
     loadTime: "afterDOMReady",
     moduleType: "module",
     contentType: "external",
