@@ -31,42 +31,7 @@ const HermesTrigger: QuartzComponent = ({ fileData, displayClass }: QuartzCompon
       data-updated-at={updatedAt}
       data-entity-name={entityName}
     >
-      <div class="hermes-trigger-card-header">
-        <div>
-          <p class="hermes-trigger-eyebrow">Hermes discussion trigger</p>
-          <h2>이 페이지 기준 질문 초안 만들기</h2>
-        </div>
-        <span class="hermes-trigger-badge">step 1</span>
-      </div>
-
-      <p class="hermes-trigger-body">
-        이 버튼은 Hermes를 직접 호출하지 않습니다. 현재 페이지 맥락을 넣은 템플릿을 복사해서
-        Discord에 붙여 넣는 용도입니다.
-      </p>
-
-      <div class="hermes-trigger-actions">
-        <button
-          type="button"
-          class="hermes-trigger-button hermes-trigger-button-primary"
-          data-hermes-template="general"
-        >
-          Hermes 질문 시작
-        </button>
-        <button type="button" class="hermes-trigger-button" data-hermes-template="relationship">
-          관계 질문 템플릿 복사
-        </button>
-      </div>
-
-      <p class="hermes-trigger-feedback" aria-live="polite"></p>
-
-      <div class="hermes-trigger-output" hidden>
-        <p class="hermes-trigger-output-label">
-          복사 실패 시 아래 내용을 직접 복사해서 붙여 넣으면 됩니다.
-        </p>
-        <textarea class="hermes-trigger-output-textarea" readonly rows={14}></textarea>
-      </div>
-
-      <div class="hermes-trigger-stage2" data-hermes-stage2>
+      <div class="hermes-trigger-stage2 hermes-trigger-stage2-primary" data-hermes-stage2>
         <div class="hermes-trigger-card-header">
           <div>
             <p class="hermes-trigger-eyebrow">Hermes 토론 요청</p>
@@ -74,7 +39,7 @@ const HermesTrigger: QuartzComponent = ({ fileData, displayClass }: QuartzCompon
           </div>
           <span class="hermes-trigger-badge hermes-trigger-badge-stage2">step 2</span>
         </div>
-        <p class="hermes-trigger-body">
+        <p class="hermes-trigger-body hermes-trigger-stage2-lead">
           현재 페이지 컨텍스트와 입력한 질문으로 <strong>새 Discord 토론 스레드</strong>를 즉시
           생성합니다. 기존 채널/스레드에는 글이 올라가지 않고, 항상 이 요청 전용 스레드가 새로
           만들어집니다. 동시에 <code>content/market-intel/hermes-inbox/</code>에 감사용 마크다운이
@@ -97,6 +62,46 @@ const HermesTrigger: QuartzComponent = ({ fileData, displayClass }: QuartzCompon
         </div>
         <p class="hermes-trigger-feedback" data-hermes-stage2-feedback aria-live="polite"></p>
       </div>
+
+      <details class="hermes-trigger-step1-details">
+        <summary>
+          <span>step 1 템플릿 복사형도 보기</span>
+          <span class="hermes-trigger-step1-summary-note">수동 복붙이 필요할 때만</span>
+        </summary>
+
+        <div class="hermes-trigger-step1-panel">
+          <div class="hermes-trigger-card-header">
+            <div>
+              <p class="hermes-trigger-eyebrow">Hermes discussion trigger</p>
+              <h2>이 페이지 기준 질문 초안 만들기</h2>
+            </div>
+            <span class="hermes-trigger-badge">step 1</span>
+          </div>
+
+          <p class="hermes-trigger-body">
+            이 버튼은 Hermes를 직접 호출하지 않습니다. 현재 페이지 맥락을 넣은 템플릿을 복사해서
+            Discord에 붙여 넣는 용도입니다.
+          </p>
+
+          <div class="hermes-trigger-actions">
+            <button type="button" class="hermes-trigger-button" data-hermes-template="general">
+              Hermes 질문 시작
+            </button>
+            <button type="button" class="hermes-trigger-button" data-hermes-template="relationship">
+              관계 질문 템플릿 복사
+            </button>
+          </div>
+
+          <p class="hermes-trigger-feedback" aria-live="polite"></p>
+
+          <div class="hermes-trigger-output" hidden>
+            <p class="hermes-trigger-output-label">
+              복사 실패 시 아래 내용을 직접 복사해서 붙여 넣으면 됩니다.
+            </p>
+            <textarea class="hermes-trigger-output-textarea" readonly rows={14}></textarea>
+          </div>
+        </div>
+      </details>
 
       <details class="hermes-trigger-details">
         <summary>무슨 템플릿이 복사되는지 보기</summary>
@@ -219,6 +224,34 @@ HermesTrigger.css = `
   padding: 0.8rem;
 }
 
+.hermes-trigger-step1-details {
+  border-top: 1px dashed var(--lightgray);
+  padding-top: 0.85rem;
+}
+
+.hermes-trigger-step1-details summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.45rem 0.75rem;
+  cursor: pointer;
+  color: var(--secondary);
+  font-weight: 700;
+}
+
+.hermes-trigger-step1-summary-note {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--gray);
+}
+
+.hermes-trigger-step1-panel {
+  display: grid;
+  gap: 0.85rem;
+  margin-top: 0.75rem;
+}
+
 .hermes-trigger-actions {
   display: flex;
   flex-wrap: wrap;
@@ -282,6 +315,24 @@ HermesTrigger.css = `
   padding-top: 0.85rem;
   border-top: 1px dashed var(--lightgray);
   min-width: 0;
+}
+
+.hermes-trigger-stage2-primary {
+  padding: 1rem;
+  padding-top: 1rem;
+  border-top: none;
+  border: 1px solid color-mix(in srgb, #2b8a3e 28%, var(--lightgray) 72%);
+  border-radius: 16px;
+  background: color-mix(in srgb, #2b8a3e 8%, var(--light) 92%);
+  box-shadow: 0 10px 30px rgba(43, 138, 62, 0.08);
+}
+
+.hermes-trigger-stage2-primary .hermes-trigger-actions {
+  margin-top: 0.15rem;
+}
+
+.hermes-trigger-stage2-lead {
+  font-size: 0.95rem;
 }
 
 .hermes-trigger-stage2-textarea {
