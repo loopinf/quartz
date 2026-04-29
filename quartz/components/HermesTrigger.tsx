@@ -117,13 +117,23 @@ const HermesTrigger: QuartzComponent = ({ fileData, displayClass }: QuartzCompon
 
 HermesTrigger.css = `
 .hermes-trigger-card {
-  margin: 1rem 0 1.25rem;
+  margin: 1.5rem 0 0;
   padding: 1rem 1.05rem;
   border: 1px solid var(--lightgray);
   border-radius: 18px;
   background: color-mix(in srgb, var(--light) 94%, transparent);
   display: grid;
   gap: 0.85rem;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+.hermes-trigger-card *,
+.hermes-trigger-card *::before,
+.hermes-trigger-card *::after {
+  box-sizing: border-box;
 }
 
 .hermes-trigger-card-header {
@@ -131,11 +141,17 @@ HermesTrigger.css = `
   justify-content: space-between;
   align-items: flex-start;
   gap: 0.8rem;
+  min-width: 0;
+}
+
+.hermes-trigger-card-header > div {
+  min-width: 0;
 }
 
 .hermes-trigger-card-header h2 {
   margin: 0.15rem 0 0;
   font-size: 1rem;
+  overflow-wrap: anywhere;
 }
 
 .hermes-trigger-eyebrow {
@@ -157,6 +173,7 @@ HermesTrigger.css = `
   font-size: 0.75rem;
   font-weight: 700;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .hermes-trigger-body,
@@ -165,9 +182,22 @@ HermesTrigger.css = `
   margin: 0;
 }
 
+.hermes-trigger-body,
+.hermes-trigger-feedback,
+.hermes-trigger-output-label,
+.hermes-trigger-details,
+.hermes-trigger-card code,
+.hermes-trigger-card a,
+.hermes-trigger-card summary,
+.hermes-trigger-card li {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
 .hermes-trigger-output {
   display: grid;
   gap: 0.45rem;
+  min-width: 0;
 }
 
 .hermes-trigger-output-label {
@@ -178,6 +208,7 @@ HermesTrigger.css = `
 
 .hermes-trigger-output-textarea {
   width: 100%;
+  max-width: 100%;
   min-height: 13rem;
   resize: vertical;
   border-radius: 12px;
@@ -192,6 +223,7 @@ HermesTrigger.css = `
   display: flex;
   flex-wrap: wrap;
   gap: 0.6rem;
+  min-width: 0;
 }
 
 .hermes-trigger-button {
@@ -203,6 +235,7 @@ HermesTrigger.css = `
   font: inherit;
   font-weight: 700;
   cursor: pointer;
+  max-width: 100%;
 }
 
 .hermes-trigger-button:hover {
@@ -248,10 +281,12 @@ HermesTrigger.css = `
   gap: 0.6rem;
   padding-top: 0.85rem;
   border-top: 1px dashed var(--lightgray);
+  min-width: 0;
 }
 
 .hermes-trigger-stage2-textarea {
   width: 100%;
+  max-width: 100%;
   resize: vertical;
   border-radius: 12px;
   border: 1px solid var(--lightgray);
@@ -268,18 +303,29 @@ HermesTrigger.css = `
 @media (max-width: 700px) {
   .hermes-trigger-card {
     padding: 0.9rem;
+    margin-top: 1.25rem;
   }
 
   .hermes-trigger-card-header {
     flex-direction: column;
   }
 
+  .hermes-trigger-badge {
+    align-self: flex-start;
+  }
+
   .hermes-trigger-actions {
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .hermes-trigger-button {
     width: 100%;
+  }
+
+  .hermes-trigger-output-textarea,
+  .hermes-trigger-stage2-textarea {
+    font-size: 16px;
   }
 }
 `

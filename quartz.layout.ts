@@ -30,7 +30,16 @@ const marketIntelExplorerMapFn = new Function(
 export const sharedPageComponents: SharedLayout = {
   head: Component.Head(),
   header: [],
-  afterBody: [],
+  afterBody: [
+    Component.ConditionalRender({
+      component: Component.HermesTrigger(),
+      condition: (page) => {
+        const entityType = page.fileData.frontmatter?.entity_type
+        const slug = page.fileData.slug ?? ""
+        return Boolean(entityType && slug.startsWith("market-intel/entities/"))
+      },
+    }),
+  ],
   footer: Component.Footer({
     links: {
       GitHub: "https://github.com/jackyzha0/quartz",
@@ -48,14 +57,6 @@ export const defaultContentPageLayout: PageLayout = {
     }),
     Component.ArticleTitle(),
     Component.ContentMeta(),
-    Component.ConditionalRender({
-      component: Component.HermesTrigger(),
-      condition: (page) => {
-        const entityType = page.fileData.frontmatter?.entity_type
-        const slug = page.fileData.slug ?? ""
-        return Boolean(entityType && slug.startsWith("market-intel/entities/"))
-      },
-    }),
     Component.TagList(),
   ],
   left: [
