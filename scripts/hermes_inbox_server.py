@@ -76,6 +76,10 @@ def is_allowed_preview_host(hostname: str) -> bool:
         return True
     if host.endswith(".local"):
         return True
+    if host.endswith(".ts.net") or host.endswith(".beta.tailscale.net"):
+        return True
+    if "." not in host and all(ch.isalnum() or ch == "-" for ch in host):
+        return True
     try:
         ip = ipaddress.ip_address(host)
     except ValueError:
