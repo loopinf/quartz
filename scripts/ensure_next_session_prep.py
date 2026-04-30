@@ -264,6 +264,18 @@ def stock_entity_path(vault_market_intel: Path, name: str) -> Path:
     return vault_market_intel / "entities" / "stocks" / f"{name}.md"
 
 
+def stock_entity_label(vault_market_intel: Path, name: str) -> str:
+    return stock_entity_link(name) if stock_entity_path(vault_market_intel, name).exists() else name
+
+
+def join_stock_labels(vault_market_intel: Path, names: list[str], sep: str = ", ") -> str:
+    return sep.join(stock_entity_label(vault_market_intel, name) for name in names if name)
+
+
+def bullet_stock_members(vault_market_intel: Path, names: list[str], indent: str = "  - ") -> list[str]:
+    return [f"{indent}{stock_entity_label(vault_market_intel, name)}" for name in names if name]
+
+
 def review_note_slug(target_date: date) -> str:
     return f"replay-{target_date:%Y-%m-%d}-next-session-prep"
 
@@ -626,42 +638,151 @@ def build_content(context: PrepContext) -> str:
     if len(residual_names) < 4:
         residual_names.extend(context.ungrouped_names[: max(0, 4 - len(residual_names))])
     recurrence = theme_recurrence_count(context.recent_recaps)
+    first_theme = top_clusters[0].name if top_clusters else "주도 테마"
+    second_theme = top_clusters[1].name if len(top_clusters) >= 2 else "보조 축"
+    third_theme = top_clusters[2].name if len(top_clusters) >= 3 else "후속 확산 테마"
+    first_leaders = limited_members(top_clusters[0], 4) if top_clusters else []
+    second_leaders = limited_members(top_clusters[1], 3) if len(top_clusters) >= 2 else []
+    third_leaders = limited_members(top_clusters[2], 3) if len(top_clusters) >= 3 else []
+    residual_watch = residual_names[:4] or context.ungrouped_names[:4]
 
     lines: list[str] = [
         render_frontmatter(context),
         "",
         f"# {context.target_date:%Y-%m-%d} Next Session Prep",
         "",
-        "## Why this note exists",
-        f"- 이 문서는 **{context.target_date:%Y-%m-%d} {weekday_label(context.target_date)} 장전 대응 문서**다.",
-        f"- 기준 close는 `{context.base_date:%Y-%m-%d}`이고, 따라서 이 노트 안에서 `오늘`은 **{context.target_date:%Y-%m-%d} KST pre-open**을 뜻한다.",
-        "- 이 문서는 `validated recap + close input + prior event proof + stock entity memory + 저장된 최근 며칠 graph`를 종합한 prior-close-only scaffold이며, same-day intraday/close 정보는 포함하지 않는다.",
-        f"- 장마감 정리는 {note_link(context.recap_path.stem)}에, 장전 실행 포인트는 이 문서에 분리한다.",
+        "## One-line prep",
+        f"**{context.target_date:%Y-%m-%d} 장전의 기본 시나리오는 {first_theme} continuation 여부를 먼저 확인하되, 최근 5거래일의 집중→분산→재선별 흐름 위에서 {second_theme}/{third_theme} 축이 새 리더로 굳는지도 함께 판단하는 것이다.**",
         "",
-        "## Recent 5 trading days synthesized context",
+        "## 1. Prep / Context",
+        "### Today first: operator view",
     ]
+
+    lines.append(f"- **Primary check = {first_theme}**")
+    lines.append(f"  - leader: {join_stock_labels(context.vault_market_intel, first_leaders, sep=' / ') or '없음'}")
+    lines.append(f"  - 이유: {context.base_date:%m/%d} validated recap에서 상위 군집이었고, 최근 5거래일 프레임의 기준축이다.")
+    lines.append(f"- **Secondary check = {second_theme}**")
+    lines.append(f"  - leader: {join_stock_labels(context.vault_market_intel, second_leaders, sep=' / ') or '없음'}")
+    lines.append("  - 이유: 메인 축과 함께 붙으면 공동 주도축 해석 강도가 올라간다.")
+    lines.append(f"- **Expansion watch = {third_theme}**")
+    lines.append(f"  - names: {join_stock_labels(context.vault_market_intel, third_leaders, sep=' / ') or '없음'}")
+    lines.append("  - 이유: 장초 메인 leader는 아니어도 후속 확산으로 승격될 수 있는 보조 슬롯이다.")
+    if residual_watch:
+        lines.append("- **Residual / re-check**")
+        lines.append(f"  - names: {join_stock_labels(context.vault_market_intel, residual_watch, sep=' / ')}")
+        lines.append("  - 이유: 메인 시나리오가 약해질 때 대체 순환 또는 개별 수급 반응을 확인하는 보조 버킷이다.")
+
+    lines.extend([
+        "",
+        "### Priority names / sectors",
+        "#### A. leader 확인",
+    ])
+    lines.extend(bullet_stock_members(context.vault_market_intel, primary_names[:8], indent="- "))
+    lines.extend([
+        "",
+        "#### B. 후속 확산 확인",
+    ])
+    lines.extend(bullet_stock_members(context.vault_market_intel, (expansion_names[:8] or primary_names[4:8]), indent="- "))
+    lines.extend([
+        "",
+        "#### C. 재집중 / 반전 확인",
+    ])
+    if residual_watch:
+        lines.extend(bullet_stock_members(context.vault_market_intel, residual_watch[:8], indent="- "))
+    else:
+        lines.append("- 현재 별도 우선 후보 없음")
+
+    lines.extend([
+        "",
+        "### Quick rationale",
+        "- 이 리스트는 매수 추천이 아니라 **장초 observation priority** 순서다.",
+        "- `A. leader 확인`은 당일 breadth 상위 군집의 중심 이름들이다.",
+        "- `B. 후속 확산 확인`은 cluster로 같이 움직이면 해석이 강해지는 이름들이다.",
+        "- `C. 재집중 / 반전 확인`은 메인 시나리오 실패 시 대체 순환 후보를 보는 observation bucket이다.",
+        "",
+        "## 2. Prediction",
+        "### Primary scenario",
+        f"- **{first_theme} continuation**이 주 시나리오다.",
+        f"- 예상 path: {join_stock_labels(context.vault_market_intel, first_leaders, sep=' / ') or first_theme} 중 최소 2개 이상이 장초 거래대금 상위권에서 동행하면, {context.base_date:%m/%d} breadth가 하루짜리 반응이 아니라는 쪽으로 해석 강도를 높인다.",
+        "- 이 경우 시장은 `소수 단일주 급등`보다는 **leader + 2선주 동반 확산** 구조로 읽는 게 맞다.",
+        "",
+        "### Secondary scenario",
+        f"- **{second_theme} 공동 주도축 승격**이 부 시나리오다.",
+        f"- 예상 path: {join_stock_labels(context.vault_market_intel, second_leaders, sep=' / ') or second_theme} 쪽이 동반 강세를 보이면, `{first_theme} + {second_theme}`의 2축 장세로 해석한다.",
+        f"- 이 경우 {first_theme}만 과열 추격하기보다 {second_theme} 쪽으로 분산 진입 기회를 같이 보는 쪽이 낫다.",
+        "",
+        "### Expansion scenario",
+        f"- **{third_theme} 후속 확산**은 2차 시나리오다.",
+        f"- 예상 path: {join_stock_labels(context.vault_market_intel, third_leaders, sep=' / ') or third_theme}가 재돌파 또는 거래대금 회복을 보이면 `headline only`가 아니라 후속 순환 확산으로 본다.",
+        "- 이 경우 메인 leader 추격보다 **2차 확산 entry** 후보로 활용할 수 있다.",
+        "",
+        "### Failure / invalidation conditions",
+        f"- {first_theme} 상위주가 갭만 만들고 바로 밀리면 continuation 해석을 빠르게 낮춘다.",
+        f"- {second_theme} 테마가 breadth 없이 일부 종목만 강하면 공동 주도축 해석을 약화한다.",
+        f"- {third_theme} 포함 후속 테마가 거래대금을 못 붙이면 확산 시나리오를 하향한다.",
+        "- 최근 5거래일 흐름상 분산 재편이었는데 장초부터 소수 종목만 남으면 단기 순환매/소화 구간 가능성을 높인다.",
+        "",
+        "## 3. Execution plan",
+        "### A. Entry triggers",
+        f"1. **{first_theme} leader continuation 매수 후보**",
+        f"   - 조건: 시초 구간에서 {join_stock_labels(context.vault_market_intel, first_leaders, sep=' / ') or first_theme} 중 최소 2개 이상이 거래대금 상위 유지 + 눌림 후 재확인",
+        "   - 행동: leader 1종목 추격보다 leader 1 + 동반주 1 형태로 분산 진입 우선 검토",
+        f"2. **{second_theme} 공동 주도축 매수 후보**",
+        f"   - 조건: {join_stock_labels(context.vault_market_intel, second_leaders, sep=' / ') or second_theme} 쪽 동행 강세, 단발 급등이 아니라 breadth 동반",
+        f"   - 행동: {first_theme} 과열 시 {second_theme} 쪽을 대체/보조 진입군으로 사용 가능",
+        f"3. **{third_theme} 2차 확산 매수 후보**",
+        f"   - 조건: {join_stock_labels(context.vault_market_intel, third_leaders, sep=' / ') or third_theme}가 장초 약세 후 거래대금 회복 + 재돌파 형태를 만들 때",
+        "   - 행동: 메인 leader 실패가 아니라 `후속 확산 슬롯`으로 접근",
+        "",
+        "### B. No-trade / pass conditions",
+        "- leader 1종목만 뜨고 동반주 확산이 없으면 추격 금지",
+        "- 갭상만 크고 시초 이후 거래대금 유지가 안 되면 패스",
+        f"- {second_theme} 테마가 breadth 없이 일부 종목 뉴스성 급등만 보이면 패스",
+        f"- {third_theme} 축이 장초 반응 후 바로 죽으면 후속 확산 가설 보류",
+        "",
+        "### C. Hold / upgrade conditions",
+        "- 첫 눌림 이후 재확산이 나오고 동반주 수가 늘어나면 **단순 scalp → hold candidate**로 승격",
+        f"- {first_theme} 단일 테마가 아니라 {second_theme}/{third_theme}까지 다축 확산이 확인되면 보유 시간 연장 가능성 검토",
+        "- breakout 연속성이 강한 이름은 같은 조건에서 우선 hold 후보로 본다.",
+        "",
+        "### D. Reduce / exit conditions",
+        "- leader가 장초 고점만 찍고 거래대금 순위에서 빠르게 이탈하면 축소/청산 우선",
+        "- 동반주가 무너지는데 선도주만 버티는 경우는 `breadth failure`로 보고 보수적으로 대응",
+        "- 같은 테마 안에서 후속주가 더 못 붙으면 메인 시나리오 강도 자체를 낮춘다.",
+        "",
+        "### E. Open checklist",
+        f"1. **{first_theme}가 장초부터 거래대금 leader로 유지되는지 확인**",
+        f"2. **{second_theme} 축이 {first_theme}와 함께 공동 주도축인지, 아니면 일부 종목 강세에 그치는지 확인**",
+        f"3. **{third_theme} 축이 후속 확산을 만드는지, 아니면 headline 반응 후 약해지는지 확인**",
+        "4. **전일 상위 급등주가 gap-only인지, 시초 이후 거래대금까지 유지하는지 확인**",
+        "5. **시장이 breadth가 붙는 다축 확산인지, 아니면 소수 leader 집중 구조인지 구분**",
+        "",
+        "## 4. Evidence / Appendix",
+        "### Recent 5 trading days synthesized context",
+    ])
     if context.recent_recaps:
         lines.extend(recent_recap_reference_lines(context.recent_recaps))
-        lines.append("")
-        lines.append("반복 등장 테마:")
-        lines.extend(summarize_recent_theme_recurrence(context.recent_recaps))
+        lines.extend([
+            "",
+            "#### Repeated theme signal",
+        ])
+        rec_lines = summarize_recent_theme_recurrence(context.recent_recaps)
+        if rec_lines:
+            lines.extend(rec_lines)
     else:
         lines.append("- 최근 5거래일 validated recap reference unavailable")
 
     lines.extend([
         "",
-        "## Base context available before the open",
+        "### Base context available before the open",
         f"- {context.base_date:%m/%d} validated TOP30는 **{join_themes_for_sentence(top_clusters)}** 축이 먼저 보이는 날이었다.",
+        f"- 최우선 해석 축은 `{first_theme}` continuation 여부이고, leader는 {join_stock_labels(context.vault_market_intel, first_leaders) or first_theme} 쪽이다.",
     ])
-    if top_clusters:
-        first = top_clusters[0]
-        lines.append(f"- 최우선 해석 축은 `{first.name}` continuation 여부이고, leader는 {', '.join(limited_members(first, 4))} 쪽이다.")
-    if len(top_clusters) >= 2:
-        second = top_clusters[1]
-        lines.append(f"- 동시에 `{second.name}`가 보조/공동 주도축으로 붙는지 확인해야 하며, 대표 종목은 {', '.join(limited_members(second, 3))}다.")
+    if second_leaders:
+        lines.append(f"- 동시에 `{second_theme}` 축이 보조/공동 주도축으로 붙는지 확인해야 하며, 대표 종목은 {join_stock_labels(context.vault_market_intel, second_leaders)}다.")
     lines.append("- 전날 하루만 보는 게 아니라, 최근 5거래일 정리 데이터에서 `집중 -> 분산 -> 재선별` 흐름이 어떻게 이어졌는지 위 기준선 위에서 판단한다.")
 
-    lines.extend(["", *render_entity_memory_sections(context, primary_names, expansion_names, residual_names), "", "## 신고가 / high-signal 팩트층"])
+    lines.extend(["", "### 신고가 / high-signal 팩트층"])
     if has_same_window_high_signal(context.recent_recaps):
         lines.append("- 최근 5거래일 구간 안에 로컬 high-signal snapshot이 존재한다. carry-over 후보와의 overlap은 별도 high-signal 자동 연결 단계에서 끌어와야 한다.")
     else:
@@ -669,82 +790,17 @@ def build_content(context: PrepContext) -> str:
     lines.extend([
         "- 따라서 이번 prep은 특정 종목을 `신고가/high-signal confirmed`로 단정하지 않고, **validated recap 기반 군집 연속성 + 최근 5거래일 반복 등장 + leader breadth**를 우선 근거로 쓴다.",
         "- high-signal overlap이 있는 이름은 carry-over theme 선정 근거와 함께 읽어야 한다.",
-    ])
-
-    lines.extend(["", "## Carry-over themes 선정 근거"])
-    if primary:
-        lines.append("### 1순위 primary check")
-        for cluster in primary:
-            lines.append(f"- {cluster.name}")
-            lines.extend(bullet_members(limited_members(cluster, 4)))
-            lines.append(f"  - **근거**: {context.base_date:%m/%d} validated recap에서 {cluster.count}개로 상위 군집이었다.")
-            if recurrence.get(cluster.name, 0) >= 2:
-                lines.append(f"  - **근거**: 최근 5거래일 중 {recurrence[cluster.name]}회 반복 등장해 carry-over 지속성 후보다.")
-    if expansion:
-        lines.append("")
-        lines.append("### 2순위 expansion check")
-        for cluster in expansion:
-            lines.append(f"- {cluster.name}")
-            lines.extend(bullet_members(limited_members(cluster, 3)))
-            lines.append("  - **근거**: 당일 메인 leader는 아니지만 후속 확산이 붙으면 해석 강도가 커지는 보조 축이다.")
-            if recurrence.get(cluster.name, 0) >= 2:
-                lines.append(f"  - **근거**: 최근 5거래일 중 {recurrence[cluster.name]}회 등장해 재등장/재점화 가능성이 있다.")
-    if residual or context.ungrouped_names:
-        lines.append("")
-        lines.append("### 3순위 residual / rotation check")
-        for cluster in residual:
-            lines.append(f"- {cluster.name}")
-            lines.extend(bullet_members(limited_members(cluster, 2)))
-            lines.append("  - **근거**: 메인 시나리오가 약해질 때 대체 순환으로 붙는지 보는 residual bucket이다.")
-        if context.ungrouped_names:
-            lines.append("- 개별주/혼합")
-            lines.extend(bullet_members(context.ungrouped_names[:5]))
-            lines.append("  - **근거**: 군집보다 개별 수급 반응으로 남은 이름들이다.")
-
-    first_theme = top_clusters[0].name if top_clusters else "주도 테마"
-    second_theme = top_clusters[1].name if len(top_clusters) >= 2 else "보조 축"
-    third_theme = top_clusters[2].name if len(top_clusters) >= 3 else "후속 확산 테마"
-    lines.extend([
         "",
-        "## Priority names / sectors 선정 근거",
-        "- `A. leader 확인`은 당일 breadth 상위 군집의 중심 이름들이다.",
-        "- `B. 후속 확산 확인`은 cluster로 같이 움직이면 해석이 강해지는 이름들이다.",
-        "- `C. 재집중 / 반전 확인`은 메인 시나리오 실패 시 대체 순환 후보를 보는 observation bucket이다.",
-        "- 즉 이 리스트는 매수 추천이 아니라, **장초 observation priority** 순서다.",
+        *render_entity_memory_sections(context, primary_names, expansion_names, residual_names),
         "",
-        "## What to check at the open",
-        f"1. **{first_theme}가 장초부터 거래대금 leader로 유지되는지 확인**",
-        f"2. **{second_theme}가 {first_theme}와 함께 공동 주도축인지, 아니면 일부 종목 강세에 그치는지 확인**",
-        f"3. **{third_theme}가 후속 확산을 만드는지, 아니면 headline 반응 후 약해지는지 확인**",
-        "4. **전일 상위 급등주가 gap-only인지, 시초 이후 거래대금까지 유지하는지 확인**",
-        "5. **시장이 breadth가 붙는 다축 확산인지, 아니면 소수 leader 집중 구조인지 구분**",
+        "## 5. Note boundary / review handoff",
+        "### Why this note exists",
+        f"- 이 문서는 **{context.target_date:%Y-%m-%d} {weekday_label(context.target_date)} 장전 대응 문서**다.",
+        f"- 기준 close는 `{context.base_date:%Y-%m-%d}`이고, 따라서 이 노트 안에서 `오늘`은 **{context.target_date:%Y-%m-%d} KST pre-open**을 뜻한다.",
+        "- 이 문서는 `validated recap + close input + prior event proof + stock entity memory + 저장된 최근 며칠 graph`를 종합한 prior-close-only scaffold이며, same-day intraday/close 정보는 포함하지 않는다.",
+        f"- 장마감 정리는 {note_link(context.recap_path.stem)}에, 장전 실행 포인트는 이 문서에 분리한다.",
         "",
-        "## Priority names / sectors",
-        "### A. leader 확인",
-    ])
-    for name in primary_names[:8]:
-        lines.append(f"- {name}")
-    lines.append("")
-    lines.append("### B. 후속 확산 확인")
-    for name in expansion_names[:8] or primary_names[4:8]:
-        lines.append(f"- {name}")
-    lines.append("")
-    lines.append("### C. 재집중 / 반전 확인")
-    for name in residual_names[:8]:
-        lines.append(f"- {name}")
-
-    lines.extend([
-        "",
-        "## Failure / invalidation conditions",
-        f"- {first_theme} 상위주가 갭만 만들고 바로 밀리면 continuation 해석을 빠르게 낮춘다.",
-        f"- {second_theme}가 breadth 없이 일부 종목만 강하면 공동 주도축 해석을 약화한다.",
-        f"- {third_theme} 포함 후속 테마가 거래대금을 못 붙이면 확산 시나리오를 하향한다.",
-        "- 최근 5거래일 흐름상 분산 재편이었는데 장초부터 소수 종목만 남으면 단기 순환매/소화 구간 가능성을 높인다.",
-        "",
-        "## One-line prep",
-        f"**{context.target_date:%Y-%m-%d} 장전의 기본 시나리오는 {first_theme} 중심 continuation 여부를 먼저 확인하되, 최근 5거래일의 집중→분산→재선별 흐름 위에서 {second_theme}/{third_theme}가 새 리더로 굳는지도 함께 판단하는 것이다.**",
-        "",
-        "## Guardrail",
+        "### Guardrail",
         "- 이 문서는 prior-close-only scaffold다.",
         "- 실제 결과 비교와 회고는 별도 replay/review 문서로 넘긴다.",
         "",

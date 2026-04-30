@@ -9,7 +9,13 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-from ensure_next_session_prep import build_context, build_entity_inputs, limited_members, render_entity_memory_sections
+from ensure_next_session_prep import (
+    build_context,
+    build_entity_inputs,
+    limited_members,
+    render_entity_memory_sections,
+    stock_entity_label,
+)
 
 KST = ZoneInfo("Asia/Seoul")
 OUTCOME_DIR = Path("/Users/gbserver/repos/jmkr_kj/data/signals/high-signal-entry-outcomes")
@@ -116,17 +122,26 @@ def inject_entity_sections(note_text: str, context) -> str:
 
 
 def section_range(lines: list[str], heading: str) -> tuple[int, int] | None:
-    needle = f"## {heading}"
     start = None
+    start_level = None
     for idx, line in enumerate(lines):
-        if line.strip() == needle:
+        stripped = line.strip()
+        if not stripped.startswith("#"):
+            continue
+        title = stripped.lstrip("#").strip()
+        if title == heading:
             start = idx
+            start_level = len(stripped) - len(stripped.lstrip("#"))
             break
-    if start is None:
+    if start is None or start_level is None:
         return None
     end = len(lines)
     for idx in range(start + 1, len(lines)):
-        if lines[idx].startswith("## "):
+        stripped = lines[idx].strip()
+        if not stripped.startswith("#"):
+            continue
+        level = len(stripped) - len(stripped.lstrip("#"))
+        if level <= start_level:
             end = idx
             break
     return start, end
@@ -221,7 +236,7 @@ def format_rule(rule: str) -> str:
     return rule.replace("_", " ")
 
 
-def build_section(note_text: str) -> str:
+def build_section(note_text: str, vault_market_intel: Path | None = None) -> str:
     lines = note_text.splitlines()
     hs_range = section_range(lines, "신고가 / high-signal 팩트층")
     if hs_range is None:
@@ -285,6 +300,12 @@ def build_section(note_text: str) -> str:
     breakout_names = buckets.get("breakout", [])
     near_names = buckets.get("near-high", [])
     technical_names = buckets.get("technical", [])
+
+    def render_name(name: str) -> str:
+        if vault_market_intel is None:
+            return f"`{name}`"
+        return stock_entity_label(vault_market_intel, name)
+
     names = []
     for n in breakout_names + near_names + technical_names:
         if n not in names:
@@ -296,7 +317,7 @@ def build_section(note_text: str) -> str:
         for name in names[:8]:
             name_rows = [r for r in rows if r.get("stock_name") == name]
             if not name_rows:
-                out.append(f"- `{name}`: historical outcome row가 아직 없다.")
+                out.append(f"- {render_name(name)}: historical outcome row가 아직 없다.")
                 continue
             summary = summarize_rule_rows(name_rows)
             ranked = [r for r in best_rules(summary, min_available=3) if (r.get('ret_20d_avg') or -999) > 0]
@@ -307,9 +328,9 @@ def build_section(note_text: str) -> str:
                     rule_bits.append(
                         f"`{item['entry_rule']}`(20d avg {item['ret_20d_avg']}%, avail {item['available']}/{item['total']})"
                     )
-                out.append(f"- `{name}`: stock-specific breakout history 기준 우세 rule → {', '.join(rule_bits)}")
+                out.append(f"- {render_name(name)}: stock-specific breakout history 기준 우세 rule → {', '.join(rule_bits)}")
             else:
-                out.append(f"- `{name}`: stock-specific 표본이 부족해서 global breakout baseline을 우선 참조해야 한다.")
+                out.append(f"- {render_name(name)}: stock-specific 표본이 부족해서 global breakout baseline을 우선 참조해야 한다.")
 
     if breakout_names:
         breakout_rows = [r for r in rows if r.get("stock_name") in breakout_names]
@@ -344,7 +365,11 @@ def build_section(note_text: str) -> str:
 def inject_section(note_text: str, new_section: str) -> str:
     lines = note_text.splitlines()
     start_end = section_range(lines, "Conditional probability / entry-rule summary")
-    insert_before = section_range(lines, "Carry-over themes 선정 근거")
+    insert_before = (
+        section_range(lines, "Entity memory check")
+        or section_range(lines, "5. Note boundary / review handoff")
+        or section_range(lines, "Carry-over themes 선정 근거")
+    )
     new_lines = new_section.splitlines()
     if start_end:
         start, end = start_end
@@ -373,7 +398,7 @@ def main() -> int:
     if context is not None:
         text = sync_entity_inputs_frontmatter(text, build_entity_inputs(context))
         text = inject_entity_sections(text, context)
-    section = build_section(text)
+    section = build_section(text, vault_market_intel=(context.vault_market_intel if context is not None else None))
     if not section:
         print(f"SKIP no-high-signal-section {prep_path}")
         return 0
