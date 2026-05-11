@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.gbserver.market-intel-hermes-inbox</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>-lc</string>
+    <string>/Users/gbserver/market-intel-site/scripts/run-hermes-inbox-helper.sh</string>
+  </array>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+  <key>WorkingDirectory</key>
+  <string>/Users/gbserver/market-intel-site</string>
+  <key>StandardOutPath</key>
+  <string>/Users/gbserver/market-intel-site/logs/hermes-inbox.stdout.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/gbserver/market-intel-site/logs/hermes-inbox.stderr.log</string>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key>
+    <string>/Users/gbserver/.hermes/hermes-agent/venv/bin:/Users/gbserver/.hermes/hermes-agent/node_modules/.bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    <key>HERMES_HOME</key>
+    <string>/Users/gbserver/.hermes</string>
+    <key>HERMES_ENV_FILE</key>
+    <string>/Users/gbserver/.hermes/.env</string>
+    <key>HERMES_AUTO_KICKOFF_COMMAND</key>
+    <string>/Users/gbserver/.hermes/hermes-agent/venv/bin/hermes</string>
+    <key>HERMES_INBOX_BIND</key>
+    <string>0.0.0.0</string>
+    <key>HERMES_INBOX_PORT</key>
+    <string>8765</string>
+    <key>HERMES_PREVIEW_PORT</key>
+    <string>8081</string>
+  </dict>
+</dict>
+</plist>

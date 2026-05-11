@@ -18,7 +18,8 @@ This Quartz site publishes the Obsidian vault folder `market-intel/` as a browse
 - Start local preview server:
   - `PORT=8081 ./scripts/serve-market-intel.sh`
 - Start the Hermes inbox helper (stage-3: dedicated Discord thread per request):
-  - `python3 scripts/hermes_inbox_server.py`
+  - one-off/manual: `python3 scripts/hermes_inbox_server.py`
+  - install LaunchAgent auto-restart: `./scripts/install-hermes-inbox-launchagent.sh`
   - Defaults:
     - helper listens on `0.0.0.0:8765` so the same Quartz page can submit from localhost, Tailscale, or another device on the private network
     - preview origins are accepted on port `8081` for localhost / `.local` hostnames / private IPs (including Tailscale)
@@ -50,3 +51,4 @@ This Quartz site publishes the Obsidian vault folder `market-intel/` as a browse
 - macOS LaunchAgent startup serves the last synced `content/` snapshot with `SYNC_ON_START=0`; this avoids `Operation not permitted` failures against `~/Documents/Obsidian Vault` during background boot/login startup.
 - If you want fresh vault content, run `./scripts/sync-market-intel.sh` manually from an interactive shell before or after starting the preview server.
 - The `com.gbserver.market-intel-sync` LaunchAgent is not reliable without granting background access to the protected Obsidian Vault path; treat sync as an interactive/manual step unless that permission model is redesigned.
+- The Hermes inbox helper can be managed by LaunchAgent `com.gbserver.market-intel-hermes-inbox`; the repo-managed plist lives at `launchd/com.gbserver.market-intel-hermes-inbox.plist` and can be installed with `./scripts/install-hermes-inbox-launchagent.sh`.
